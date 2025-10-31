@@ -7,10 +7,10 @@ module nyu_aptos_builder_camp::governance_test {
     const ADVISOR: address = @advisor;
     const PRESIDENT: address = @president;
     const VICE: address = @vice;
-    const EBOARD1: address = @0xEBOARD1;
-    const EBOARD2: address = @0xEBOARD2;
-    const CANDIDATE1: address = @0xCANDIDATE1;
-    const CANDIDATE2: address = @0xCANDIDATE2;
+    const EBOARD1: address = @0xEB01;
+    const EBOARD2: address = @0xEB02;
+    const CANDIDATE1: address = @0xCA01;
+    const CANDIDATE2: address = @0xCA02;
 
     #[test(admin = @nyu_aptos_builder_camp)]
     fun test_init_roles(admin: signer) {
@@ -30,7 +30,7 @@ module nyu_aptos_builder_camp::governance_test {
     #[test(admin = @nyu_aptos_builder_camp)]
     #[expected_failure(abort_code = governance::E_NOT_ADMIN)]
     fun test_set_roles_unauthorized(admin: signer) {
-        let wrong_admin = @0xWRONG;
+        let wrong_admin = @0xF001;
         // This will fail because wrong_admin is not the admin
         governance::set_roles(&admin, ADVISOR, PRESIDENT, VICE);
         // Actually, we can't call with wrong signer in test, so let's test admin check differently
@@ -85,7 +85,7 @@ module nyu_aptos_builder_camp::governance_test {
         assert!(std::option::is_some(&winner), 0);
     }
 
-    #[test(admin = @nyu_aptos_builder_camp, eboard1 = @0xEBOARD1)]
+    #[test(admin = @nyu_aptos_builder_camp, eboard1 = @0xEB01)]
     fun test_eboard_weight(admin: signer, eboard1: signer) {
         setup_roles(&admin);
         start_test_election(&admin);
@@ -114,7 +114,7 @@ module nyu_aptos_builder_camp::governance_test {
         governance::cast_vote(&voter, b"PRESIDENT", 1, CANDIDATE2, 1501);
     }
 
-    #[test(admin = @nyu_aptos_builder_camp, advisor = @advisor, eboard1 = @0xEBOARD1, eboard2 = @0xEBOARD2)]
+    #[test(admin = @nyu_aptos_builder_camp, advisor = @advisor, eboard1 = @0xEB01, eboard2 = @0xEB02)]
     fun test_finalization_and_winner(admin: signer, advisor: signer, eboard1: signer, eboard2: signer) {
         setup_roles(&admin);
         start_test_election(&admin);
@@ -136,7 +136,7 @@ module nyu_aptos_builder_camp::governance_test {
         assert!(winner_addr == CANDIDATE2, 1);
     }
 
-    #[test(admin = @nyu_aptos_builder_camp, advisor = @advisor, eboard1 = @0xEBOARD1)]
+    #[test(admin = @nyu_aptos_builder_camp, advisor = @advisor, eboard1 = @0xEB01)]
     fun test_tie_case(admin: signer, advisor: signer, eboard1: signer) {
         setup_roles(&admin);
         start_test_election(&admin);

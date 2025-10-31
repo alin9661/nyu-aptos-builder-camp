@@ -11,9 +11,9 @@ module nyu_aptos_builder_camp::treasury_test {
     const ADVISOR: address = @advisor;
     const PRESIDENT: address = @president;
     const VICE: address = @vice;
-    const EBOARD1: address = @0xEBOARD1;
-    const SPONSOR: address = @0xSPONSOR;
-    const MERCH: address = @0xMERCH;
+    const EBOARD1: address = @0xEB01;
+    const SPONSOR: address = @0x5B01;
+    const MERCH: address = @0xCE01;
 
     struct FakeCoin has drop {}
 
@@ -24,7 +24,7 @@ module nyu_aptos_builder_camp::treasury_test {
         assert!(balance == 0, 0);
     }
 
-    #[test(admin = @nyu_aptos_builder_camp, sponsor = @0xSPONSOR)]
+    #[test(admin = @nyu_aptos_builder_camp, sponsor = @0x5B01)]
     fun test_deposit_sponsor(admin: signer, sponsor: signer) {
         setup_vault(&admin);
         setup_governance(&admin);
@@ -41,7 +41,7 @@ module nyu_aptos_builder_camp::treasury_test {
         assert!(balance == amount, 1);
     }
 
-    #[test(admin = @nyu_aptos_builder_camp, merch = @0xMERCH)]
+    #[test(admin = @nyu_aptos_builder_camp, merch = @0xCE01)]
     fun test_deposit_merch(admin: signer, merch: signer) {
         setup_vault(&admin);
         setup_governance(&admin);
@@ -57,7 +57,7 @@ module nyu_aptos_builder_camp::treasury_test {
         assert!(balance == amount, 1);
     }
 
-    #[test(admin = @nyu_aptos_builder_camp, eboard1 = @0xEBOARD1)]
+    #[test(admin = @nyu_aptos_builder_camp, eboard1 = @0xEB01)]
     fun test_submit_reimbursement_eboard_only(admin: signer, eboard1: signer) {
         setup_vault(&admin);
         setup_governance(&admin);
@@ -77,7 +77,7 @@ module nyu_aptos_builder_camp::treasury_test {
         assert!(id == 0, 0);
     }
 
-    #[test(admin = @nyu_aptos_builder_camp, non_eboard = @0xNON_EBOARD)]
+    #[test(admin = @nyu_aptos_builder_camp, non_eboard = @0x0E01)]
     #[expected_failure(abort_code = treasury::E_NOT_EBOARD)]
     fun test_submit_reimbursement_non_eboard(admin: signer, non_eboard: signer) {
         setup_vault(&admin);
@@ -97,7 +97,7 @@ module nyu_aptos_builder_camp::treasury_test {
         );
     }
 
-    #[test(admin = @nyu_aptos_builder_camp, advisor = @advisor, president = @president, vice = @vice, eboard1 = @0xEBOARD1)]
+    #[test(admin = @nyu_aptos_builder_camp, advisor = @advisor, president = @president, vice = @vice, eboard1 = @0xEB01)]
     fun test_approval_requires_all_three(admin: signer, advisor: signer, president: signer, vice: signer, eboard1: signer) {
         setup_vault(&admin);
         setup_governance(&admin);
@@ -133,7 +133,7 @@ module nyu_aptos_builder_camp::treasury_test {
         assert!(paid_out == false, 10);
     }
 
-    #[test(admin = @nyu_aptos_builder_camp, advisor = @advisor, president = @president, vice = @vice, eboard1 = @0xEBOARD1, executor = @0xEXECUTOR)]
+    #[test(admin = @nyu_aptos_builder_camp, advisor = @advisor, president = @president, vice = @vice, eboard1 = @0xEB01, executor = @0xEC01)]
     fun test_execute_reimbursement(admin: signer, advisor: signer, president: signer, vice: signer, eboard1: signer, executor: signer) {
         setup_vault(&admin);
         setup_governance(&admin);
@@ -175,7 +175,7 @@ module nyu_aptos_builder_camp::treasury_test {
         assert!(vault_balance == deposit_amount - reimbursement_amount, 2);
     }
 
-    #[test(admin = @nyu_aptos_builder_camp, advisor = @advisor, president = @president, vice = @vice, eboard1 = @0xEBOARD1, executor = @0xEXECUTOR)]
+    #[test(admin = @nyu_aptos_builder_camp, advisor = @advisor, president = @president, vice = @vice, eboard1 = @0xEB01, executor = @0xEC01)]
     #[expected_failure(abort_code = treasury::E_INSUFFICIENT_BALANCE)]
     fun test_payout_fails_insufficient_funds(admin: signer, advisor: signer, president: signer, vice: signer, eboard1: signer, executor: signer) {
         setup_vault(&admin);
@@ -203,7 +203,7 @@ module nyu_aptos_builder_camp::treasury_test {
         treasury::execute_reimbursement<FakeCoin>(&executor, id);
     }
 
-    #[test(admin = @nyu_aptos_builder_camp, advisor = @advisor, president = @president, eboard1 = @0xEBOARD1, executor = @0xEXECUTOR)]
+    #[test(admin = @nyu_aptos_builder_camp, advisor = @advisor, president = @president, eboard1 = @0xEB01, executor = @0xEC01)]
     #[expected_failure(abort_code = treasury::E_NOT_ALL_APPROVED)]
     fun test_execute_fails_without_all_approvals(admin: signer, advisor: signer, president: signer, eboard1: signer, executor: signer) {
         setup_vault(&admin);
@@ -230,7 +230,7 @@ module nyu_aptos_builder_camp::treasury_test {
         treasury::execute_reimbursement<FakeCoin>(&executor, id);
     }
 
-    #[test(admin = @nyu_aptos_builder_camp, advisor = @advisor, eboard1 = @0xEBOARD1)]
+    #[test(admin = @nyu_aptos_builder_camp, advisor = @advisor, eboard1 = @0xEB01)]
     #[expected_failure(abort_code = treasury::E_ALREADY_APPROVED)]
     fun test_cannot_approve_twice(admin: signer, advisor: signer, eboard1: signer) {
         setup_vault(&admin);
