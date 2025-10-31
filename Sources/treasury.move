@@ -1,7 +1,6 @@
 module nyu_aptos_builder_camp::treasury {
     use std::error;
     use std::signer;
-    use std::vector;
     use aptos_framework::coin::{Self, Coin};
     use aptos_framework::event;
     use aptos_framework::table::{Self, Table};
@@ -45,14 +44,7 @@ module nyu_aptos_builder_camp::treasury {
         paused: bool,
     }
 
-    /// Event handles for treasury events
-    struct TreasuryEvents has key {
-        deposit_received_handle: event::EventHandle<DepositReceivedEvent>,
-        reimbursement_submitted_handle: event::EventHandle<ReimbursementSubmittedEvent>,
-        reimbursement_approved_handle: event::EventHandle<ReimbursementApprovedEvent>,
-        reimbursement_paid_handle: event::EventHandle<ReimbursementPaidEvent>,
-    }
-
+    #[event]
     /// Event emitted when funds are deposited (sponsor or merch)
     struct DepositReceivedEvent has drop, store {
         source: vector<u8>, // "SPONSOR" or "MERCH"
@@ -60,6 +52,7 @@ module nyu_aptos_builder_camp::treasury {
         total_balance: u64,
     }
 
+    #[event]
     /// Event emitted when a reimbursement request is submitted
     struct ReimbursementSubmittedEvent has drop, store {
         id: u64,
@@ -68,6 +61,7 @@ module nyu_aptos_builder_camp::treasury {
         invoice_uri: vector<u8>,
     }
 
+    #[event]
     /// Event emitted when a reimbursement request is approved
     struct ReimbursementApprovedEvent has drop, store {
         id: u64,
@@ -75,6 +69,7 @@ module nyu_aptos_builder_camp::treasury {
         role: vector<u8>, // "ADVISOR", "PRESIDENT", "VICE"
     }
 
+    #[event]
     /// Event emitted when a reimbursement is paid out
     struct ReimbursementPaidEvent has drop, store {
         id: u64,
@@ -95,12 +90,6 @@ module nyu_aptos_builder_camp::treasury {
             requests: table::new<u64, ReimbursementRequest<CoinType>>(),
             paused: false,
         });
-        move_to(account, TreasuryEvents {
-            deposit_received_handle: event::new_event_handle<DepositReceivedEvent>(account),
-            reimbursement_submitted_handle: event::new_event_handle<ReimbursementSubmittedEvent>(account),
-            reimbursement_approved_handle: event::new_event_handle<ReimbursementApprovedEvent>(account),
-            reimbursement_paid_handle: event::new_event_handle<ReimbursementPaidEvent>(account),
-        });
     }
 
     /// Register coin type for tests (caller must have CoinStore)
@@ -114,7 +103,7 @@ module nyu_aptos_builder_camp::treasury {
     public entry fun deposit_sponsor<CoinType>(
         from: &signer,
         amount: u64,
-    ) acquires Vault, Treasury, TreasuryEvents {
+    ) acquires Vault, Treasury {
         let treasury = borrow_global<Treasury<CoinType>>(@nyu_aptos_builder_camp);
         assert!(!treasury.paused, error::invalid_state(E_PAUSED));
 
@@ -125,8 +114,7 @@ module nyu_aptos_builder_camp::treasury {
         let total = coin::value<CoinType>(&vault.balance);
 
         // Emit event
-        let events = borrow_global<TreasuryEvents>(@nyu_aptos_builder_camp);
-        event::emit_event(&mut events.deposit_received_handle, DepositReceivedEvent {
+        event::emit(DepositReceivedEvent {
             source: b"SPONSOR",
             amount,
             total_balance: total,
@@ -137,7 +125,7 @@ module nyu_aptos_builder_camp::treasury {
     public entry fun deposit_merch<CoinType>(
         from: &signer,
         amount: u64,
-    ) acquires Vault, Treasury, TreasuryEvents {
+    ) acquires Vault, Treasury {
         let treasury = borrow_global<Treasury<CoinType>>(@nyu_aptos_builder_camp);
         assert!(!treasury.paused, error::invalid_state(E_PAUSED));
 
@@ -148,8 +136,7 @@ module nyu_aptos_builder_camp::treasury {
         let total = coin::value<CoinType>(&vault.balance);
 
         // Emit event
-        let events = borrow_global<TreasuryEvents>(@nyu_aptos_builder_camp);
-        event::emit_event(&mut events.deposit_received_handle, DepositReceivedEvent {
+        event::emit(DepositReceivedEvent {
             source: b"MERCH",
             amount,
             total_balance: total,
@@ -163,7 +150,7 @@ module nyu_aptos_builder_camp::treasury {
         invoice_uri: vector<u8>,
         invoice_hash: vector<u8>,
         now_ts: u64,
-    ): u64 acquires Treasury, TreasuryEvents {
+    ) acquires Treasury {
         let payee_addr = signer::address_of(payee);
         let treasury = borrow_global<Treasury<CoinType>>(@nyu_aptos_builder_camp);
         assert!(!treasury.paused, error::invalid_state(E_PAUSED));
@@ -188,25 +175,25 @@ module nyu_aptos_builder_camp::treasury {
             paid_out: false,
         };
 
+        // Copy invoice_uri before moving request
+        let invoice_uri_copy = *&request.invoice_uri;
+
         table::add(&mut treasury_mut.requests, id, request);
 
         // Emit event
-        let events = borrow_global<TreasuryEvents>(@nyu_aptos_builder_camp);
-        event::emit_event(&mut events.reimbursement_submitted_handle, ReimbursementSubmittedEvent {
+        event::emit(ReimbursementSubmittedEvent {
             id,
             payee: payee_addr,
             amount,
-            invoice_uri: *&request.invoice_uri,
+            invoice_uri: invoice_uri_copy,
         });
-
-        id
     }
 
     /// Approve a reimbursement request (advisor, president, or vice only)
     public entry fun approve_reimbursement<CoinType>(
         approver: &signer,
         id: u64,
-    ) acquires Treasury, TreasuryEvents {
+    ) acquires Treasury {
         let approver_addr = signer::address_of(approver);
         let treasury = borrow_global<Treasury<CoinType>>(@nyu_aptos_builder_camp);
         assert!(!treasury.paused, error::invalid_state(E_PAUSED));
@@ -236,8 +223,7 @@ module nyu_aptos_builder_camp::treasury {
         };
 
         // Emit event
-        let events = borrow_global<TreasuryEvents>(@nyu_aptos_builder_camp);
-        event::emit_event(&mut events.reimbursement_approved_handle, ReimbursementApprovedEvent {
+        event::emit(ReimbursementApprovedEvent {
             id,
             approver: approver_addr,
             role,
@@ -248,7 +234,7 @@ module nyu_aptos_builder_camp::treasury {
     public entry fun execute_reimbursement<CoinType>(
         executor: &signer,
         id: u64,
-    ) acquires Vault, Treasury, TreasuryEvents {
+    ) acquires Vault, Treasury {
         let treasury = borrow_global<Treasury<CoinType>>(@nyu_aptos_builder_camp);
         assert!(!treasury.paused, error::invalid_state(E_PAUSED));
         assert!(table::contains(&treasury.requests, id), error::not_found(E_REQUEST_NOT_FOUND));
@@ -272,8 +258,7 @@ module nyu_aptos_builder_camp::treasury {
         request.paid_out = true;
 
         // Emit event
-        let events = borrow_global<TreasuryEvents>(@nyu_aptos_builder_camp);
-        event::emit_event(&mut events.reimbursement_paid_handle, ReimbursementPaidEvent {
+        event::emit(ReimbursementPaidEvent {
             id,
             payee: request.payee,
             amount: request.amount,
@@ -286,8 +271,7 @@ module nyu_aptos_builder_camp::treasury {
         id: u64,
     ) acquires Treasury {
         let admin_addr = signer::address_of(admin);
-        let roles = governance::get_roles();
-        assert!(admin_addr == roles.admin, error::permission_denied(E_NOT_ADMIN));
+        assert!(admin_addr == governance::get_admin(), error::permission_denied(E_NOT_ADMIN));
 
         let treasury = borrow_global<Treasury<CoinType>>(@nyu_aptos_builder_camp);
         assert!(table::contains(&treasury.requests, id), error::not_found(E_REQUEST_NOT_FOUND));
@@ -308,8 +292,7 @@ module nyu_aptos_builder_camp::treasury {
         paused: bool,
     ) acquires Treasury {
         let admin_addr = signer::address_of(admin);
-        let roles = governance::get_roles();
-        assert!(admin_addr == roles.admin, error::permission_denied(E_NOT_ADMIN));
+        assert!(admin_addr == governance::get_admin(), error::permission_denied(E_NOT_ADMIN));
 
         let treasury = borrow_global_mut<Treasury<CoinType>>(@nyu_aptos_builder_camp);
         treasury.paused = paused;
@@ -338,4 +321,3 @@ module nyu_aptos_builder_camp::treasury {
         )
     }
 }
-

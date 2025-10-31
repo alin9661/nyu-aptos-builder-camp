@@ -1,5 +1,6 @@
 module nyu_aptos_builder_camp::governance {
     use std::error;
+    use std::option;
     use std::signer;
     use std::vector;
     use aptos_framework::event;
@@ -53,14 +54,8 @@ module nyu_aptos_builder_camp::governance {
         winner: option::Option<address>,
     }
 
-    /// Event handles for governance events
-    struct GovernanceEvents has key {
-        candidate_added_handle: event::EventHandle<CandidateAddedEvent>,
-        vote_cast_handle: event::EventHandle<VoteCastEvent>,
-        election_finalized_handle: event::EventHandle<ElectionFinalizedEvent>,
-    }
-
     /// Event emitted when a candidate is added to an election
+    #[event]
     struct CandidateAddedEvent has drop, store {
         role_name: vector<u8>,
         election_id: u64,
@@ -68,6 +63,7 @@ module nyu_aptos_builder_camp::governance {
     }
 
     /// Event emitted when a vote is cast
+    #[event]
     struct VoteCastEvent has drop, store {
         role_name: vector<u8>,
         election_id: u64,
@@ -77,6 +73,7 @@ module nyu_aptos_builder_camp::governance {
     }
 
     /// Event emitted when an election is finalized
+    #[event]
     struct ElectionFinalizedEvent has drop, store {
         role_name: vector<u8>,
         election_id: u64,
@@ -99,11 +96,6 @@ module nyu_aptos_builder_camp::governance {
             president: president_addr,
             vice_president: vice_president_addr,
             eboard_members,
-        });
-        move_to(admin, GovernanceEvents {
-            candidate_added_handle: event::new_event_handle<CandidateAddedEvent>(admin),
-            vote_cast_handle: event::new_event_handle<VoteCastEvent>(admin),
-            election_finalized_handle: event::new_event_handle<ElectionFinalizedEvent>(admin),
         });
     }
 
@@ -173,7 +165,7 @@ module nyu_aptos_builder_camp::governance {
         role_name: vector<u8>,
         election_id: u64,
         candidate: address,
-    ) acquires Roles, Election, GovernanceEvents {
+    ) acquires Roles, Election {
         let admin_addr = signer::address_of(admin);
         let roles = borrow_global<Roles>(@nyu_aptos_builder_camp);
         assert!(admin_addr == roles.admin, error::permission_denied(E_NOT_ADMIN));
@@ -187,8 +179,7 @@ module nyu_aptos_builder_camp::governance {
             vector::push_back(&mut election.candidates, candidate);
 
             // Emit event
-            let events = borrow_global<GovernanceEvents>(@nyu_aptos_builder_camp);
-            event::emit_event(&mut events.candidate_added_handle, CandidateAddedEvent {
+            event::emit(CandidateAddedEvent {
                 role_name,
                 election_id,
                 candidate,
@@ -204,7 +195,7 @@ module nyu_aptos_builder_camp::governance {
         election_id: u64,
         candidate: address,
         now_ts: u64,
-    ) acquires Roles, Election, GovernanceEvents {
+    ) acquires Roles, Election {
         let voter_addr = signer::address_of(voter);
         let roles = borrow_global<Roles>(@nyu_aptos_builder_camp);
         let election = borrow_global_mut<Election>(@nyu_aptos_builder_camp);
@@ -231,7 +222,7 @@ module nyu_aptos_builder_camp::governance {
         // Determine voter weight
         let weight = if (voter_addr == roles.advisor) {
             ADVISOR_WEIGHT
-        } else if (is_eboard_member(&roles, voter_addr)) {
+        } else if (is_eboard_member(roles, voter_addr)) {
             EBOARD_WEIGHT
         } else {
             abort error::permission_denied(E_NOT_ELIGIBLE_VOTER)
@@ -253,8 +244,7 @@ module nyu_aptos_builder_camp::governance {
         };
 
         // Emit event
-        let events = borrow_global<GovernanceEvents>(@nyu_aptos_builder_camp);
-        event::emit_event(&mut events.vote_cast_handle, VoteCastEvent {
+        event::emit(VoteCastEvent {
             role_name,
             election_id,
             voter: voter_addr,
@@ -274,7 +264,7 @@ module nyu_aptos_builder_camp::governance {
         role_name: vector<u8>,
         election_id: u64,
         now_ts: u64,
-    ) acquires Roles, Election, GovernanceEvents {
+    ) acquires Roles, Election {
         let admin_addr = signer::address_of(admin);
         let roles = borrow_global<Roles>(@nyu_aptos_builder_camp);
         assert!(admin_addr == roles.admin, error::permission_denied(E_NOT_ADMIN));
@@ -322,8 +312,7 @@ module nyu_aptos_builder_camp::governance {
         election.finalized = true;
 
         // Emit event
-        let events = borrow_global<GovernanceEvents>(@nyu_aptos_builder_camp);
-        event::emit_event(&mut events.election_finalized_handle, ElectionFinalizedEvent {
+        event::emit(ElectionFinalizedEvent {
             role_name,
             election_id,
             winner: election.winner,
@@ -343,10 +332,6 @@ module nyu_aptos_builder_camp::governance {
 
     /// Public getter: Read-only access to Roles for cross-module access
     /// Treasury module will use this to check role memberships
-    public fun get_roles(): &Roles acquires Roles {
-        borrow_global<Roles>(@nyu_aptos_builder_camp)
-    }
-
     /// Helper: Check if address is advisor
     public fun is_advisor(addr: address): bool acquires Roles {
         let roles = borrow_global<Roles>(@nyu_aptos_builder_camp);
@@ -370,5 +355,10 @@ module nyu_aptos_builder_camp::governance {
         let roles = borrow_global<Roles>(@nyu_aptos_builder_camp);
         is_eboard_member(roles, addr)
     }
-}
 
+    /// Helper: Get admin address
+    public fun get_admin(): address acquires Roles {
+        let roles = borrow_global<Roles>(@nyu_aptos_builder_camp);
+        roles.admin
+    }
+}
