@@ -1,0 +1,21 @@
+[package]
+name = "nyu_aptos_builder_camp"
+version = "1.0.0"
+
+[addresses]
+nyu_aptos_builder_camp = "0xLAB"
+advisor = "0xADVISOR"
+president = "0xPRESIDENT"
+vice = "0xVICE"
+
+[dev-addresses]
+nyu_aptos_builder_camp = "0xLAB"
+advisor = "0xADVISOR"
+president = "0xPRESIDENT"
+vice = "0xVICE"
+
+[dependencies]
+AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework", rev = "mainnet" }
+
+[dev-dependencies]
+
