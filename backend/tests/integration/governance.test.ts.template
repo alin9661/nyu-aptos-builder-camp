@@ -1,0 +1,57 @@
+/**
+ * Integration tests for governance routes
+ *
+ * TEMPLATE: Follow the pattern from auth.test.ts
+ *
+ * Tests to implement:
+ *
+ * 1. GET /api/governance/elections
+ *    - Should return all elections
+ *    - Should support pagination
+ *    - Should filter by role
+ *    - Should filter by status (finalized/active)
+ *    - Should include candidates for each election
+ *    - Should include vote tallies for finalized elections
+ *
+ * 2. GET /api/governance/elections/:electionId/:role
+ *    - Should return specific election details
+ *    - Should include all candidates
+ *    - Should include all votes
+ *    - Should include vote tallies
+ *    - Should return 404 for non-existent election
+ *
+ * 3. POST /api/governance/vote (authenticated)
+ *    - Should accept vote transaction hash
+ *    - Should wait for transaction confirmation
+ *    - Should return 401 without authentication
+ *    - Should return 400 for invalid transaction hash
+ *
+ * 4. GET /api/governance/roles
+ *    - Should return current role assignments
+ *    - Should include admin, advisor, president, vice_president
+ *    - Should include display names
+ *
+ * 5. GET /api/governance/members
+ *    - Should return all e-board members
+ *    - Should sort by role hierarchy
+ *    - Should include all member details
+ *
+ * 6. GET /api/governance/stats
+ *    - Should return election statistics
+ *    - Should include vote statistics
+ *    - Should include recent elections
+ *
+ * Setup:
+ * - Seed test users with various roles
+ * - Seed elections with different statuses
+ * - Seed candidates and votes
+ * - Mock Aptos SDK for transaction confirmation
+ *
+ * Edge cases to test:
+ * - Active elections vs finalized
+ * - Elections with no votes
+ * - Elections with tie votes
+ * - Multiple elections for same role
+ */
+
+// TODO: Implement tests following the auth.test.ts pattern
