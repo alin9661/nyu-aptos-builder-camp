@@ -144,13 +144,13 @@ module nyu_aptos_builder_camp::treasury {
     }
 
     /// Submit a reimbursement request (e-board members only)
-    public entry fun submit_reimbursement<CoinType>(
+    public fun submit_reimbursement<CoinType>(
         payee: &signer,
         amount: u64,
         invoice_uri: vector<u8>,
         invoice_hash: vector<u8>,
         now_ts: u64,
-    ) acquires Treasury {
+    ): u64 acquires Treasury {
         let payee_addr = signer::address_of(payee);
         let treasury = borrow_global<Treasury<CoinType>>(@nyu_aptos_builder_camp);
         assert!(!treasury.paused, error::invalid_state(E_PAUSED));
@@ -187,6 +187,8 @@ module nyu_aptos_builder_camp::treasury {
             amount,
             invoice_uri: invoice_uri_copy,
         });
+
+        id
     }
 
     /// Approve a reimbursement request (advisor, president, or vice only)
