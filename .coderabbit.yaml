@@ -1,0 +1,168 @@
+# CodeRabbit Configuration for NYU Aptos Builder Camp
+# Governance & Treasury Smart Contracts + Next.js Frontend
+
+# Schema reference
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+
+language: "en-US"
+early_access: false
+enable_free_tier: true
+
+reviews:
+  profile: "assertive"
+  request_changes_workflow: false
+  high_level_summary: true
+  high_level_summary_placeholder: "@coderabbitai summary"
+  auto_title_placeholder: "@coderabbitai"
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  sequence_diagrams: true
+  changed_files_summary: true
+  labeling_instructions: []
+
+  # Path filters - exclude build artifacts and dependencies
+  path_filters:
+    - "!**/node_modules/**"
+    - "!**/build/**"
+    - "!**/.aptos/**"
+    - "!**/dist/**"
+    - "!**/.next/**"
+    - "!**/out/**"
+    - "!**/*.min.js"
+    - "!**/*.lock"
+    - "!**/package-lock.json"
+    - "!**/yarn.lock"
+    - "!**/pnpm-lock.yaml"
+    - "!**/*.log"
+
+  # Path-specific review instructions
+  path_instructions:
+    # Aptos Move Smart Contracts - Security Critical
+    - path: "contracts/**/*.move"
+      instructions: |
+        **CRITICAL SECURITY REVIEW FOR BLOCKCHAIN SMART CONTRACTS**
+
+        Focus on these security aspects:
+        1. **Access Control**: Verify all admin/role checks are present and correct
+        2. **Reentrancy Safety**: Confirm proper use of Move's linear type system
+        3. **Integer Overflow/Underflow**: Check arithmetic operations for safety
+        4. **Balance Checks**: Ensure sufficient funds before transfers
+        5. **Time-based Logic**: Validate timestamp comparisons and time windows
+        6. **State Consistency**: Check for race conditions and state conflicts
+        7. **Event Emissions**: Verify all state changes emit appropriate events
+        8. **Error Handling**: Ensure all error codes are properly defined and used
+        9. **Type Safety**: Confirm generic type parameters are used correctly
+        10. **Resource Management**: Check proper handling of coins and resources
+
+        Code quality:
+        - Follow Move best practices and idioms
+        - Ensure functions are well-documented with clear purpose
+        - Verify test coverage for all critical paths
+        - Check for gas optimization opportunities
+        - Validate invariants and preconditions
+
+    # Move Test Files
+    - path: "contracts/**/tests/**/*.move"
+      instructions: |
+        Review Move test files with focus on:
+        1. **Test Coverage**: Ensure all critical paths and edge cases are tested
+        2. **Error Cases**: Verify negative test cases for all error codes
+        3. **Access Control Tests**: Test unauthorized access scenarios
+        4. **Edge Cases**: Test boundary conditions (zero amounts, max values, etc.)
+        5. **Time-based Tests**: Verify election/timestamp logic edge cases
+        6. **State Transitions**: Test all valid and invalid state transitions
+        7. **Test Clarity**: Ensure test names clearly describe what is being tested
+        8. **Test Independence**: Verify tests don't depend on each other
+
+    # Move Configuration
+    - path: "**/Move.toml"
+      instructions: |
+        Review Move.toml configuration:
+        1. Verify all named addresses are properly defined
+        2. Check dependency versions are pinned appropriately
+        3. Ensure package metadata is complete and accurate
+
+    # TypeScript/React Frontend - Next.js
+    - path: "frontend/**/*.{ts,tsx}"
+      instructions: |
+        Review TypeScript/React code for:
+        1. **Type Safety**: Ensure proper TypeScript types, no 'any' usage
+        2. **React Best Practices**: Check hooks usage, component structure
+        3. **Next.js Patterns**: Verify proper use of App Router, Server/Client Components
+        4. **Performance**: Look for unnecessary re-renders, missing memoization
+        5. **Accessibility**: Check for proper ARIA labels and semantic HTML
+        6. **Error Handling**: Verify error boundaries and graceful degradation
+        7. **State Management**: Check form handling (react-hook-form + zod)
+        8. **Security**: Validate input sanitization and XSS prevention
+        9. **Code Quality**: Ensure components are modular and reusable
+        10. **Styling**: Verify proper Tailwind CSS usage and responsive design
+
+    # Frontend Configuration Files
+    - path: "frontend/**/*.{json,js}"
+      instructions: |
+        Review configuration files for:
+        - Proper dependency versions and security
+        - Correct build and script configurations
+        - Environment variable handling
+        - No sensitive data in config files
+
+    # Documentation Files
+    - path: "**/*.md"
+      instructions: |
+        Review documentation for:
+        - Clarity and completeness
+        - Accurate code examples
+        - Up-to-date information
+        - Proper formatting and structure
+        - Security warnings where appropriate
+
+    # GitHub Workflows and CI/CD
+    - path: ".github/**/*.{yml,yaml}"
+      instructions: |
+        Review CI/CD configurations for:
+        - Proper secret management
+        - Efficient workflow structure
+        - Correct build and test steps
+        - Security scanning integration
+
+  # Auto-review settings
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    ignore_title_keywords:
+      - "WIP"
+      - "DO NOT MERGE"
+      - "DRAFT"
+      - "DNM"
+
+  # Only review PRs to main branch
+  base_branches:
+    - "main"
+
+  # Review draft PRs
+  drafts: true
+
+  # Abort on file limit
+  abort_on_close: true
+
+  # Enable knowledge base learning
+  knowledge_base: true
+
+chat:
+  auto_reply: true
+
+# Tools and linters integration
+tools:
+  enabled: true
+  entries:
+    - name: "biome"
+      enabled: false
+    - name: "eslint"
+      enabled: true
+    - name: "markdownlint"
+      enabled: true
+    - name: "github-checks"
+      enabled: true
+    - name: "yamllint"
+      enabled: true

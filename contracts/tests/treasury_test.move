@@ -2,7 +2,7 @@
 module nyu_aptos_builder_camp::treasury_test {
     use std::signer;
     use std::vector;
-    use aptos_framework::coin::{Self, Coin};
+    use aptos_framework::coin;
     use aptos_framework::managed_coin;
     use nyu_aptos_builder_camp::governance;
     use nyu_aptos_builder_camp::treasury;
@@ -33,7 +33,7 @@ module nyu_aptos_builder_camp::treasury_test {
         // Give sponsor some coins
         let amount = 10000;
         managed_coin::register<FakeCoin>(&sponsor);
-        coin::deposit<FakeCoin>(signer::address_of(&sponsor), coin::mint<FakeCoin>(amount, &sponsor));
+        managed_coin::mint<FakeCoin>(&sponsor, signer::address_of(&sponsor), amount);
 
         treasury::deposit_sponsor<FakeCoin>(&sponsor, amount);
 
@@ -49,7 +49,7 @@ module nyu_aptos_builder_camp::treasury_test {
 
         let amount = 5000;
         managed_coin::register<FakeCoin>(&merch);
-        coin::deposit<FakeCoin>(signer::address_of(&merch), coin::mint<FakeCoin>(amount, &merch));
+        managed_coin::mint<FakeCoin>(&merch, signer::address_of(&merch), amount);
 
         treasury::deposit_merch<FakeCoin>(&merch, amount);
 
@@ -111,7 +111,7 @@ module nyu_aptos_builder_camp::treasury_test {
 
         // Approve by advisor
         treasury::approve_reimbursement<FakeCoin>(&advisor, id);
-        let (_, _, approved_advisor, approved_president, approved_vice, paid_out) = treasury::get_request<FakeCoin>(id);
+        let (_, _, _, approved_advisor, approved_president, approved_vice, paid_out) = treasury::get_request<FakeCoin>(id);
         assert!(approved_advisor == true, 0);
         assert!(approved_president == false, 1);
         assert!(approved_vice == false, 2);
@@ -119,14 +119,14 @@ module nyu_aptos_builder_camp::treasury_test {
 
         // Approve by president
         treasury::approve_reimbursement<FakeCoin>(&president, id);
-        let (_, _, approved_advisor, approved_president, approved_vice, paid_out) = treasury::get_request<FakeCoin>(id);
+        let (_, _, _, approved_advisor, approved_president, approved_vice, paid_out) = treasury::get_request<FakeCoin>(id);
         assert!(approved_advisor == true, 4);
         assert!(approved_president == true, 5);
         assert!(approved_vice == false, 6);
 
         // Approve by vice
         treasury::approve_reimbursement<FakeCoin>(&vice, id);
-        let (_, _, approved_advisor, approved_president, approved_vice, paid_out) = treasury::get_request<FakeCoin>(id);
+        let (_, _, _, approved_advisor, approved_president, approved_vice, paid_out) = treasury::get_request<FakeCoin>(id);
         assert!(approved_advisor == true, 7);
         assert!(approved_president == true, 8);
         assert!(approved_vice == true, 9);
@@ -142,7 +142,7 @@ module nyu_aptos_builder_camp::treasury_test {
         // Deposit funds
         let deposit_amount = 10000;
         managed_coin::register<FakeCoin>(&admin);
-        coin::deposit<FakeCoin>(signer::address_of(&admin), coin::mint<FakeCoin>(deposit_amount, &admin));
+        managed_coin::mint<FakeCoin>(&admin, signer::address_of(&admin), deposit_amount);
         treasury::deposit_sponsor<FakeCoin>(&admin, deposit_amount);
 
         // Submit reimbursement
@@ -167,7 +167,7 @@ module nyu_aptos_builder_camp::treasury_test {
         assert!(new_balance == initial_balance + reimbursement_amount, 0);
 
         // Verify request marked as paid
-        let (_, _, _, _, _, paid_out) = treasury::get_request<FakeCoin>(id);
+        let (_, _, _, _, _, _, paid_out) = treasury::get_request<FakeCoin>(id);
         assert!(paid_out == true, 1);
 
         // Verify vault balance decreased
@@ -185,7 +185,7 @@ module nyu_aptos_builder_camp::treasury_test {
         // Deposit only 500
         let deposit_amount = 500;
         managed_coin::register<FakeCoin>(&admin);
-        coin::deposit<FakeCoin>(signer::address_of(&admin), coin::mint<FakeCoin>(deposit_amount, &admin));
+        managed_coin::mint<FakeCoin>(&admin, signer::address_of(&admin), deposit_amount);
         treasury::deposit_sponsor<FakeCoin>(&admin, deposit_amount);
 
         // Submit reimbursement for 1000 (more than available)
@@ -213,7 +213,7 @@ module nyu_aptos_builder_camp::treasury_test {
         // Deposit funds
         let deposit_amount = 10000;
         managed_coin::register<FakeCoin>(&admin);
-        coin::deposit<FakeCoin>(signer::address_of(&admin), coin::mint<FakeCoin>(deposit_amount, &admin));
+        managed_coin::mint<FakeCoin>(&admin, signer::address_of(&admin), deposit_amount);
         treasury::deposit_sponsor<FakeCoin>(&admin, deposit_amount);
 
         // Submit reimbursement
