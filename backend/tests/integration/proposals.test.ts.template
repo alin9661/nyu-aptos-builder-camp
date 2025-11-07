@@ -1,0 +1,67 @@
+/**
+ * Integration tests for proposals routes
+ *
+ * TEMPLATE: Follow the pattern from auth.test.ts
+ *
+ * Tests to implement:
+ *
+ * 1. POST /api/proposals/create (authenticated, e-board+)
+ *    - Should create proposal with transaction hash
+ *    - Should require e-board role or higher
+ *    - Should return 401 without authentication
+ *    - Should return 403 for non-e-board users
+ *    - Should return 400 for invalid transaction hash
+ *
+ * 2. GET /api/proposals
+ *    - Should return all proposals
+ *    - Should support pagination
+ *    - Should filter by status
+ *    - Should filter by creator
+ *    - Should include vote statistics
+ *    - Should include creator display name
+ *
+ * 3. GET /api/proposals/:id
+ *    - Should return specific proposal details
+ *    - Should include all votes
+ *    - Should include vote statistics
+ *    - Should include voter display names
+ *    - Should return 404 for non-existent proposal
+ *
+ * 4. POST /api/proposals/:id/vote (authenticated)
+ *    - Should accept vote transaction hash
+ *    - Should wait for transaction confirmation
+ *    - Should return 401 without authentication
+ *    - Should return 400 for invalid transaction hash
+ *
+ * 5. GET /api/proposals/status/active
+ *    - Should return only active proposals
+ *    - Should filter by current timestamp
+ *    - Should include vote statistics
+ *    - Should sort by end time
+ *
+ * 6. GET /api/proposals/stats/overview
+ *    - Should return proposal statistics by status
+ *    - Should return vote statistics
+ *    - Should include recent proposals
+ *
+ * Setup:
+ * - Seed test users with various roles
+ * - Seed proposals with different statuses
+ * - Seed proposal votes
+ * - Mock Aptos SDK for transaction confirmation
+ *
+ * Proposal statuses to test:
+ * - DRAFT (0)
+ * - ACTIVE (1)
+ * - PASSED (2)
+ * - REJECTED (3)
+ * - EXECUTED (4)
+ *
+ * Edge cases:
+ * - Proposals with voting period ended
+ * - Proposals with no votes
+ * - Proposals with tie votes
+ * - Weighted voting calculations
+ */
+
+// TODO: Implement tests following the auth.test.ts pattern

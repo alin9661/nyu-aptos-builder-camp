@@ -1,0 +1,61 @@
+/**
+ * Integration tests for treasury routes
+ *
+ * TEMPLATE: Follow the pattern from auth.test.ts
+ *
+ * Tests to implement:
+ *
+ * 1. GET /api/treasury/balance
+ *    - Should fetch current vault balance
+ *    - Should format balance correctly
+ *    - Should handle errors from blockchain
+ *
+ * 2. GET /api/treasury/transactions
+ *    - Should return paginated transaction list
+ *    - Should respect pagination parameters
+ *    - Should sort transactions correctly
+ *    - Should filter by transaction type if provided
+ *
+ * 3. GET /api/treasury/stats
+ *    - Should return aggregated statistics
+ *    - Should calculate sponsor vs merch totals
+ *    - Should include reimbursement stats
+ *
+ * 4. GET /api/reimbursements
+ *    - Should return all reimbursement requests
+ *    - Should support pagination
+ *    - Should include user display names
+ *    - Should filter by status if provided
+ *
+ * 5. GET /api/reimbursements/:id
+ *    - Should return specific reimbursement details
+ *    - Should include approvals
+ *    - Should include invoice metadata
+ *    - Should return 404 for non-existent ID
+ *
+ * 6. POST /api/reimbursements/submit (authenticated)
+ *    - Should accept transaction hash
+ *    - Should wait for transaction confirmation
+ *    - Should return 401 without authentication
+ *    - Should return 400 for invalid transaction hash
+ *
+ * 7. POST /api/reimbursements/:id/approve (authenticated, leadership only)
+ *    - Should accept approval transaction hash
+ *    - Should require leadership role
+ *    - Should return 401 without authentication
+ *    - Should return 403 for non-leadership users
+ *
+ * Setup:
+ * - Use clearDatabase() before each test
+ * - Seed test users with different roles
+ * - Seed treasury deposits and reimbursements
+ * - Mock Aptos SDK responses for blockchain calls
+ * - Use API helper for authenticated requests
+ *
+ * Mocks needed:
+ * - aptos.view() for balance queries
+ * - aptos.waitForTransaction() for transaction confirmation
+ * - Database queries for transactions and reimbursements
+ */
+
+// TODO: Implement tests following the auth.test.ts pattern
