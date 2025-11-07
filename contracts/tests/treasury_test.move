@@ -111,7 +111,7 @@ module nyu_aptos_builder_camp::treasury_test {
 
         // Approve by advisor
         treasury::approve_reimbursement<FakeCoin>(&advisor, id);
-        let (_, _, approved_advisor, approved_president, approved_vice, paid_out) = treasury::get_request<FakeCoin>(id);
+        let (_, _, _, approved_advisor, approved_president, approved_vice, paid_out) = treasury::get_request<FakeCoin>(id);
         assert!(approved_advisor == true, 0);
         assert!(approved_president == false, 1);
         assert!(approved_vice == false, 2);
@@ -119,14 +119,14 @@ module nyu_aptos_builder_camp::treasury_test {
 
         // Approve by president
         treasury::approve_reimbursement<FakeCoin>(&president, id);
-        let (_, _, approved_advisor, approved_president, approved_vice, paid_out) = treasury::get_request<FakeCoin>(id);
+        let (_, _, _, approved_advisor, approved_president, approved_vice, paid_out) = treasury::get_request<FakeCoin>(id);
         assert!(approved_advisor == true, 4);
         assert!(approved_president == true, 5);
         assert!(approved_vice == false, 6);
 
         // Approve by vice
         treasury::approve_reimbursement<FakeCoin>(&vice, id);
-        let (_, _, approved_advisor, approved_president, approved_vice, paid_out) = treasury::get_request<FakeCoin>(id);
+        let (_, _, _, approved_advisor, approved_president, approved_vice, paid_out) = treasury::get_request<FakeCoin>(id);
         assert!(approved_advisor == true, 7);
         assert!(approved_president == true, 8);
         assert!(approved_vice == true, 9);
@@ -167,7 +167,7 @@ module nyu_aptos_builder_camp::treasury_test {
         assert!(new_balance == initial_balance + reimbursement_amount, 0);
 
         // Verify request marked as paid
-        let (_, _, _, _, _, paid_out) = treasury::get_request<FakeCoin>(id);
+        let (_, _, _, _, _, _, paid_out) = treasury::get_request<FakeCoin>(id);
         assert!(paid_out == true, 1);
 
         // Verify vault balance decreased
