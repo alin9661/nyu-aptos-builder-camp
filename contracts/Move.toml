@@ -3,10 +3,10 @@ name = "nyu_aptos_builder_camp"
 version = "1.0.0"
 
 [addresses]
-nyu_aptos_builder_camp = "0xCAFE"
-advisor = "0xAD01"
-president = "0xA001"
-vice = "0x01CE"
+nyu_aptos_builder_camp = "0x86fa747242844756cc17632b80cc47c3db4453e5c31a7f1d8f2b7f902dedbae1"
+advisor = "0x1bbb744dfc6e64c72cc92b16035571e24afc8db5714725731c319bdea5fc2054"
+president = "0x5c1e78670785078889c2002f55a65bc36df355db880a04f507ad006fd6f136bb"
+vice = "0x40ee645ff7fb97466e7394d4c3757abf6598a8f0aa333d1b07c8178e4334e5d7"
 
 [dependencies]
 AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework", rev = "mainnet" }
