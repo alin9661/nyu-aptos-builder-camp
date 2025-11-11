@@ -102,7 +102,7 @@ module nyu_aptos_builder_camp::proposals_test {
 
         // Check status
         let status = proposals::get_proposal_status(proposal_id);
-        assert!(status == proposals::STATUS_PASSED(), 0);
+        assert!(status == proposals::test_STATUS_PASSED(), 0);
     }
 
     #[test(admin = @nyu_aptos_builder_camp, eboard1 = @0xEB01, eboard2 = @0xEB02)]
@@ -128,7 +128,7 @@ module nyu_aptos_builder_camp::proposals_test {
 
         // Check status
         let status = proposals::get_proposal_status(proposal_id);
-        assert!(status == proposals::STATUS_REJECTED(), 0);
+        assert!(status == proposals::test_STATUS_REJECTED(), 0);
     }
 
     #[test(admin = @nyu_aptos_builder_camp, eboard1 = @0xEB01, voter = @advisor)]
@@ -210,7 +210,7 @@ module nyu_aptos_builder_camp::proposals_test {
 
         // Check status
         let status = proposals::get_proposal_status(proposal_id);
-        assert!(status == proposals::STATUS_EXECUTED(), 0);
+        assert!(status == proposals::test_STATUS_EXECUTED(), 0);
     }
 
     // Helper functions

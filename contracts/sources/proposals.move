@@ -270,18 +270,18 @@ module nyu_aptos_builder_camp::proposals {
     // Public accessors for error codes and status constants for use in tests
 
     #[test_only]
-    public fun E_NOT_ADMIN(): u64 { E_NOT_ADMIN }
+    public fun test_E_NOT_ADMIN(): u64 { E_NOT_ADMIN }
     #[test_only]
-    public fun E_NOT_EBOARD(): u64 { E_NOT_EBOARD }
+    public fun test_E_NOT_EBOARD(): u64 { E_NOT_EBOARD }
     #[test_only]
-    public fun E_ALREADY_VOTED(): u64 { E_ALREADY_VOTED }
+    public fun test_E_ALREADY_VOTED(): u64 { E_ALREADY_VOTED }
     #[test_only]
-    public fun E_VOTING_CLOSED(): u64 { E_VOTING_CLOSED }
+    public fun test_E_VOTING_CLOSED(): u64 { E_VOTING_CLOSED }
 
     #[test_only]
-    public fun STATUS_PASSED(): u8 { STATUS_PASSED }
+    public fun test_STATUS_PASSED(): u8 { STATUS_PASSED }
     #[test_only]
-    public fun STATUS_REJECTED(): u8 { STATUS_REJECTED }
+    public fun test_STATUS_REJECTED(): u8 { STATUS_REJECTED }
     #[test_only]
-    public fun STATUS_EXECUTED(): u8 { STATUS_EXECUTED }
+    public fun test_STATUS_EXECUTED(): u8 { STATUS_EXECUTED }
 }

@@ -1,4 +1,4 @@
-# NYU Aptos Builder Camp - Governance & Treasury
+# Nexus - Governance & Treasury
 
 A production-ready Aptos Move package providing weighted voting governance and multisig treasury management for e-board operations.
 
@@ -354,5 +354,5 @@ aptos move test --filter test_init_roles
 
 ## License
 
-This package is provided for educational and production use in the NYU Aptos Builder Camp.
+This package is provided for educational and production use in Nexus.
 
