@@ -19,7 +19,7 @@ export default function AuthPage() {
 
   const handleAuth0Login = () => {
     // Redirect to Auth0 login (Google sign-in will be configured in Auth0 dashboard)
-    window.location.href = '/auth/login';
+    window.location.href = '/api/auth/login';
   };
 
   const handleWalletLogin = () => {

@@ -1,12 +1,12 @@
 import { Auth0Client } from '@auth0/nextjs-auth0/server';
 
-/**
- * Auth0 client instance for server-side authentication
- * Automatically configured using environment variables:
- * - AUTH0_SECRET
- * - AUTH0_BASE_URL
- * - AUTH0_ISSUER_BASE_URL
- * - AUTH0_CLIENT_ID
- * - AUTH0_CLIENT_SECRET
- */
-export const auth0 = new Auth0Client();
+// Configure Auth0 to use /api/auth routes instead of /auth
+// This prevents conflict with the custom /auth page
+export const auth0 = new Auth0Client({
+  routes: {
+    login: '/api/auth/login',
+    logout: '/api/auth/logout',
+    callback: '/api/auth/callback',
+    postLogoutRedirect: '/auth',
+  },
+});
