@@ -1,9 +1,9 @@
 import { Router, Request, Response } from 'express';
-import { aptos, MODULES } from '../config/aptos';
+import { aptos } from '../config/aptos';
 import { query } from '../config/database';
 import { logger } from '../utils/logger';
 import { validateQuery, paginationSchema } from '../utils/validators';
-import { verifyAuth, optionalAuth, AuthenticatedRequest } from '../middleware/auth';
+import { verifyAuth, AuthenticatedRequest } from '../middleware/auth';
 
 const router = Router();
 
@@ -98,7 +98,7 @@ router.get('/elections', validateQuery(paginationSchema), async (req: Request, r
       })
     );
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         elections: electionsWithCandidates,
@@ -112,7 +112,7 @@ router.get('/elections', validateQuery(paginationSchema), async (req: Request, r
     });
   } catch (error) {
     logger.error('Failed to fetch elections', { error });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to fetch elections',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -190,7 +190,7 @@ router.get('/elections/:electionId/:role', async (req: Request, res: Response) =
       [electionId, role]
     );
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         ...election,
@@ -207,7 +207,7 @@ router.get('/elections/:electionId/:role', async (req: Request, res: Response) =
     });
   } catch (error) {
     logger.error('Failed to fetch election details', { error });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to fetch election details',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -238,7 +238,7 @@ router.post('/vote', verifyAuth, async (req: AuthenticatedRequest, res: Response
 
     logger.info('Vote cast', { transactionHash, version: txn.version });
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         transactionHash,
@@ -248,7 +248,7 @@ router.post('/vote', verifyAuth, async (req: AuthenticatedRequest, res: Response
     });
   } catch (error) {
     logger.error('Failed to process vote', { error });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to process vote',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -260,7 +260,7 @@ router.post('/vote', verifyAuth, async (req: AuthenticatedRequest, res: Response
  * GET /api/governance/roles
  * Get current role assignments from blockchain
  */
-router.get('/roles', async (req: Request, res: Response) => {
+router.get('/roles', async (_req: Request, res: Response) => {
   try {
     // Note: This would require view functions in the Move module
     // For now, we can get from database if we're tracking role changes
@@ -277,7 +277,7 @@ router.get('/roles', async (req: Request, res: Response) => {
         END
     `);
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         roles: roles.reduce((acc, user) => {
@@ -291,7 +291,7 @@ router.get('/roles', async (req: Request, res: Response) => {
     });
   } catch (error) {
     logger.error('Failed to fetch roles', { error });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to fetch roles',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -303,7 +303,7 @@ router.get('/roles', async (req: Request, res: Response) => {
  * GET /api/governance/members
  * Get all e-board members
  */
-router.get('/members', async (req: Request, res: Response) => {
+router.get('/members', async (_req: Request, res: Response) => {
   try {
     const members = await query(`
       SELECT address, role, display_name, email, created_at
@@ -319,7 +319,7 @@ router.get('/members', async (req: Request, res: Response) => {
         display_name ASC
     `);
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         members,
@@ -327,7 +327,7 @@ router.get('/members', async (req: Request, res: Response) => {
     });
   } catch (error) {
     logger.error('Failed to fetch members', { error });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to fetch members',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -339,7 +339,7 @@ router.get('/members', async (req: Request, res: Response) => {
  * GET /api/governance/stats
  * Get governance statistics
  */
-router.get('/stats', async (req: Request, res: Response) => {
+router.get('/stats', async (_req: Request, res: Response) => {
   try {
     const electionStats = await query(`
       SELECT
@@ -376,7 +376,7 @@ router.get('/stats', async (req: Request, res: Response) => {
       LIMIT 5
     `);
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         elections: {
@@ -395,7 +395,7 @@ router.get('/stats', async (req: Request, res: Response) => {
     });
   } catch (error) {
     logger.error('Failed to fetch governance stats', { error });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to fetch governance stats',
       message: error instanceof Error ? error.message : 'Unknown error',

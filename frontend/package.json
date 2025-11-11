@@ -1,5 +1,5 @@
 {
-  "name": "my-v0-project",
+  "name": "nexus",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,6 +9,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@aptos-labs/ts-sdk": "^5.1.1",
     "@dnd-kit/core": "latest",
     "@dnd-kit/modifiers": "latest",
     "@dnd-kit/sortable": "latest",

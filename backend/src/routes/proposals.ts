@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { aptos, MODULES, PROPOSAL_STATUS_NAMES } from '../config/aptos';
+import { aptos, PROPOSAL_STATUS_NAMES } from '../config/aptos';
 import { query } from '../config/database';
 import { logger } from '../utils/logger';
 import { validateQuery, paginationSchema } from '../utils/validators';
@@ -30,7 +30,7 @@ router.post('/create', verifyAuth, requireEboard, async (req: AuthenticatedReque
 
     logger.info('Proposal created', { transactionHash, version: txn.version });
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         transactionHash,
@@ -40,7 +40,7 @@ router.post('/create', verifyAuth, requireEboard, async (req: AuthenticatedReque
     });
   } catch (error) {
     logger.error('Failed to process proposal creation', { error });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to process proposal creation',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -125,7 +125,7 @@ router.get('/', optionalAuth, validateQuery(paginationSchema), async (req: Authe
       })
     );
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         proposals: proposalsWithVotes,
@@ -139,7 +139,7 @@ router.get('/', optionalAuth, validateQuery(paginationSchema), async (req: Authe
     });
   } catch (error) {
     logger.error('Failed to fetch proposals', { error });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to fetch proposals',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -202,7 +202,7 @@ router.get('/:id', async (req: Request, res: Response) => {
       [id]
     );
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         ...proposal,
@@ -224,7 +224,7 @@ router.get('/:id', async (req: Request, res: Response) => {
     });
   } catch (error) {
     logger.error('Failed to fetch proposal details', { error });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to fetch proposal details',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -256,7 +256,7 @@ router.post('/:id/vote', verifyAuth, async (req: AuthenticatedRequest, res: Resp
 
     logger.info('Vote cast on proposal', { proposalId: id, transactionHash, version: txn.version });
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         transactionHash,
@@ -266,7 +266,7 @@ router.post('/:id/vote', verifyAuth, async (req: AuthenticatedRequest, res: Resp
     });
   } catch (error) {
     logger.error('Failed to process proposal vote', { error });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to process proposal vote',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -278,7 +278,7 @@ router.post('/:id/vote', verifyAuth, async (req: AuthenticatedRequest, res: Resp
  * GET /api/proposals/active
  * Get currently active proposals (voting open)
  */
-router.get('/status/active', async (req: Request, res: Response) => {
+router.get('/status/active', async (_req: Request, res: Response) => {
   try {
     const now = Math.floor(Date.now() / 1000);
 
@@ -322,7 +322,7 @@ router.get('/status/active', async (req: Request, res: Response) => {
       })
     );
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         proposals: proposalsWithVotes,
@@ -331,7 +331,7 @@ router.get('/status/active', async (req: Request, res: Response) => {
     });
   } catch (error) {
     logger.error('Failed to fetch active proposals', { error });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to fetch active proposals',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -343,7 +343,7 @@ router.get('/status/active', async (req: Request, res: Response) => {
  * GET /api/proposals/stats
  * Get proposal statistics
  */
-router.get('/stats/overview', async (req: Request, res: Response) => {
+router.get('/stats/overview', async (_req: Request, res: Response) => {
   try {
     const stats = await query(`
       SELECT
@@ -379,7 +379,7 @@ router.get('/stats/overview', async (req: Request, res: Response) => {
       LIMIT 5
     `);
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         proposals: {
@@ -403,7 +403,7 @@ router.get('/stats/overview', async (req: Request, res: Response) => {
     });
   } catch (error) {
     logger.error('Failed to fetch proposal stats', { error });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to fetch proposal stats',
       message: error instanceof Error ? error.message : 'Unknown error',

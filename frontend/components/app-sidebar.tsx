@@ -35,81 +35,76 @@ import {
 
 const data = {
   user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
+    name: "Wallet User",
+    email: "Connect wallet to view",
+    avatar: "/avatars/default.jpg",
   },
   navMain: [
     {
       title: "Dashboard",
-      url: "#",
+      url: "/dashboard",
       icon: IconDashboard,
     },
     {
-      title: "Lifecycle",
-      url: "#",
-      icon: IconListDetails,
+      title: "Treasury",
+      url: "/treasury",
+      icon: IconDatabase,
+    },
+    {
+      title: "Governance",
+      url: "/governance",
+      icon: IconUsers,
     },
     {
       title: "Analytics",
       url: "#",
       icon: IconChartBar,
     },
-    {
-      title: "Projects",
-      url: "#",
-      icon: IconFolder,
-    },
-    {
-      title: "Team",
-      url: "#",
-      icon: IconUsers,
-    },
   ],
   navClouds: [
     {
-      title: "Capture",
-      icon: IconCamera,
-      isActive: true,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Proposal",
+      title: "Proposals",
       icon: IconFileDescription,
-      url: "#",
+      isActive: true,
+      url: "/governance",
       items: [
         {
           title: "Active Proposals",
-          url: "#",
+          url: "/governance?tab=proposals",
         },
         {
-          title: "Archived",
-          url: "#",
+          title: "Create Proposal",
+          url: "/governance/create",
         },
       ],
     },
     {
-      title: "Prompts",
-      icon: IconFileAi,
-      url: "#",
+      title: "Elections",
+      icon: IconUsers,
+      url: "/governance",
       items: [
         {
-          title: "Active Proposals",
-          url: "#",
+          title: "Active Elections",
+          url: "/governance?tab=elections",
         },
         {
-          title: "Archived",
-          url: "#",
+          title: "Past Elections",
+          url: "/governance?tab=past",
+        },
+      ],
+    },
+    {
+      title: "Reimbursements",
+      icon: IconReport,
+      url: "/treasury",
+      items: [
+        {
+          title: "Submit Request",
+          url: "/treasury?tab=submit",
+        },
+        {
+          title: "Pending Approvals",
+          url: "/treasury?tab=pending",
         },
       ],
     },
@@ -121,31 +116,21 @@ const data = {
       icon: IconSettings,
     },
     {
-      title: "Get Help",
+      title: "Documentation",
       url: "#",
       icon: IconHelp,
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: IconSearch,
     },
   ],
   documents: [
     {
-      name: "Data Library",
-      url: "#",
-      icon: IconDatabase,
+      name: "Blockchain Explorer",
+      url: "https://explorer.aptoslabs.com",
+      icon: IconSearch,
     },
     {
-      name: "Reports",
+      name: "Contract Address",
       url: "#",
-      icon: IconReport,
-    },
-    {
-      name: "Word Assistant",
-      url: "#",
-      icon: IconFileWord,
+      icon: IconFileAi,
     },
   ],
 }
@@ -160,9 +145,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <a href="#">
+              <a href="/dashboard">
                 <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Acme Inc.</span>
+                <span className="text-base font-semibold">Nexus</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>

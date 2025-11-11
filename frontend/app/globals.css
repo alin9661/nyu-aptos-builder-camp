@@ -123,3 +123,164 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Mobile-First Responsive Design */
+@layer utilities {
+  /* Touch-friendly button sizes (minimum 44px) */
+  .btn-touch {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  /* Mobile-optimized text sizes */
+  .text-mobile-sm {
+    @apply text-sm md:text-base;
+  }
+
+  .text-mobile-base {
+    @apply text-base md:text-lg;
+  }
+
+  .text-mobile-lg {
+    @apply text-lg md:text-xl;
+  }
+
+  /* Mobile spacing utilities */
+  .px-safe {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+
+  .py-safe {
+    @apply py-4 sm:py-6 lg:py-8;
+  }
+
+  /* Mobile-responsive containers */
+  .container-mobile {
+    @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Shimmer animation for loading states */
+  .shimmer {
+    @apply relative overflow-hidden;
+  }
+
+  .shimmer::after {
+    content: '';
+    @apply absolute inset-0 -translate-x-full animate-shimmer;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.1) 50%,
+      transparent 100%
+    );
+  }
+
+  /* Mobile-friendly card spacing */
+  .card-mobile {
+    @apply rounded-lg p-4 sm:p-6;
+  }
+
+  /* Collapsible mobile sections */
+  .mobile-collapse {
+    @apply block lg:hidden;
+  }
+
+  .mobile-expand {
+    @apply hidden lg:block;
+  }
+
+  /* Mobile scroll containers */
+  .scroll-mobile {
+    @apply overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0;
+  }
+
+  /* Responsive grid patterns */
+  .grid-mobile {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4;
+  }
+
+  .grid-mobile-auto {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4;
+  }
+
+  /* Mobile-friendly form elements */
+  .input-mobile {
+    @apply h-12 text-base;
+  }
+
+  /* Responsive font sizes */
+  .heading-mobile {
+    @apply text-2xl sm:text-3xl lg:text-4xl font-bold;
+  }
+
+  .subheading-mobile {
+    @apply text-xl sm:text-2xl lg:text-3xl font-semibold;
+  }
+}
+
+/* Shimmer keyframe animation */
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
+
+/* Mobile Navigation Styles */
+@media (max-width: 768px) {
+  /* Ensure mobile menus are full width */
+  [role="dialog"] {
+    @apply w-full;
+  }
+
+  /* Optimize table layouts for mobile */
+  table {
+    @apply text-sm;
+  }
+
+  /* Make cards full width on mobile */
+  .responsive-card {
+    @apply w-full;
+  }
+}
+
+/* Tablet breakpoint optimizations */
+@media (min-width: 768px) and (max-width: 1024px) {
+  /* Optimize for tablet portrait and landscape */
+  .tablet-optimized {
+    @apply px-6;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  /* Increase hit targets for touch devices */
+  button, a, [role="button"] {
+    @apply min-h-[44px];
+  }
+
+  /* Remove hover effects on touch devices */
+  .hover-effect {
+    @apply hover:none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  * {
+    @apply border-2;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

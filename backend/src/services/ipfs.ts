@@ -2,7 +2,6 @@ import { create, IPFSHTTPClient, Options } from 'ipfs-http-client';
 import { logger } from '../utils/logger';
 import { query } from '../config/database';
 import * as crypto from 'crypto';
-import * as fs from 'fs';
 import * as path from 'path';
 
 // IPFS configuration
@@ -33,7 +32,7 @@ export const initIPFS = (): IPFSHTTPClient => {
 export const uploadToIPFS = async (
   fileBuffer: Buffer,
   fileName: string,
-  mimeType: string
+  _mimeType: string
 ): Promise<{
   ipfsHash: string;
   fileSize: number;

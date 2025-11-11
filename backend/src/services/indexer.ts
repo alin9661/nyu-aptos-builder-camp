@@ -1,7 +1,6 @@
-import { aptos, EVENT_TYPES, MODULE_ADDRESS } from '../config/aptos';
-import { pool, query, transaction } from '../config/database';
+import { aptos, EVENT_TYPES } from '../config/aptos';
+import { query, transaction } from '../config/database';
 import { logger } from '../utils/logger';
-import cron from 'node-cron';
 import { getWebSocketService } from './websocket';
 
 // Indexer state
@@ -121,13 +120,13 @@ class TreasuryIndexer extends EventIndexer {
       const ledgerInfo = await aptos.getLedgerInfo();
       const latestVersion = BigInt(ledgerInfo.ledger_version);
 
-      if (latestVersion <= this.state.lastProcessedVersion) {
+      if (latestVersion <= (this as any).state.lastProcessedVersion) {
         return; // No new transactions
       }
 
       // Fetch events in batches
       const batchSize = 100;
-      let currentVersion = this.state.lastProcessedVersion + BigInt(1);
+      let currentVersion = (this as any).state.lastProcessedVersion + BigInt(1);
 
       while (currentVersion <= latestVersion) {
         const endVersion = currentVersion + BigInt(batchSize) - BigInt(1);
@@ -169,6 +168,7 @@ class TreasuryIndexer extends EventIndexer {
 
       for (const event of events) {
         const data = event.data as any;
+        const eventAny = event as any;
 
         await transaction(async (client) => {
           await client.query(
@@ -180,10 +180,10 @@ class TreasuryIndexer extends EventIndexer {
               Buffer.from(data.source).toString('utf-8'),
               data.amount,
               data.total_balance,
-              event.transaction_hash,
-              event.transaction_version,
-              event.transaction_block_height,
-              new Date(parseInt(event.event_index) * 1000),
+              eventAny.transaction_hash || eventAny.indexed_at_transaction_hash,
+              eventAny.transaction_version || eventAny.indexed_at_transaction_version,
+              eventAny.transaction_block_height || eventAny.indexed_at_block_height,
+              new Date(parseInt(eventAny.event_index || 0) * 1000),
             ]
           );
         });
@@ -195,14 +195,14 @@ class TreasuryIndexer extends EventIndexer {
             source: Buffer.from(data.source).toString('utf-8'),
             amount: data.amount,
             totalBalance: data.total_balance,
-            transactionHash: event.transaction_hash,
+            transactionHash: eventAny.transaction_hash || eventAny.indexed_at_transaction_hash,
             timestamp: new Date().toISOString(),
           });
         } catch (error) {
           logger.debug('WebSocket service not available for deposit event');
         }
 
-        logger.debug('Indexed deposit event', { version: event.transaction_version });
+        logger.debug('Indexed deposit event', { version: eventAny.transaction_version });
       }
     } catch (error) {
       logger.error('Failed to process deposit events', { error });
@@ -228,6 +228,7 @@ class TreasuryIndexer extends EventIndexer {
 
       for (const event of events) {
         const data = event.data as any;
+        const eventAny = event as any;
 
         await transaction(async (client) => {
           // Ensure users exist
@@ -260,9 +261,9 @@ class TreasuryIndexer extends EventIndexer {
               Buffer.from(data.invoice_uri).toString('utf-8'),
               Buffer.from(data.invoice_hash).toString('hex'),
               Date.now(),
-              event.transaction_hash,
-              event.transaction_version,
-              event.transaction_block_height,
+              eventAny.transaction_hash || eventAny.indexed_at_transaction_hash,
+              eventAny.transaction_version || eventAny.indexed_at_transaction_version,
+              eventAny.transaction_block_height || eventAny.indexed_at_block_height,
             ]
           );
         });
@@ -276,7 +277,7 @@ class TreasuryIndexer extends EventIndexer {
             payee: data.payee,
             amount: data.amount,
             invoiceUri: Buffer.from(data.invoice_uri).toString('utf-8'),
-            transactionHash: event.transaction_hash,
+            transactionHash: eventAny.transaction_hash || eventAny.indexed_at_transaction_hash,
             timestamp: new Date().toISOString(),
           });
         } catch (error) {
@@ -309,6 +310,7 @@ class TreasuryIndexer extends EventIndexer {
 
       for (const event of events) {
         const data = event.data as any;
+        const eventAny = event as any;
         const role = Buffer.from(data.role).toString('utf-8');
 
         await transaction(async (client) => {
@@ -339,9 +341,9 @@ class TreasuryIndexer extends EventIndexer {
               data.id,
               data.approver,
               role,
-              event.transaction_hash,
-              event.transaction_version,
-              event.transaction_block_height,
+              eventAny.transaction_hash || eventAny.indexed_at_transaction_hash,
+              eventAny.transaction_version || eventAny.indexed_at_transaction_version,
+              eventAny.transaction_block_height || eventAny.indexed_at_block_height,
               new Date(),
             ]
           );
@@ -371,7 +373,7 @@ class TreasuryIndexer extends EventIndexer {
                 approvalStatus.approved_advisor &&
                 approvalStatus.approved_president &&
                 approvalStatus.approved_vice,
-              transactionHash: event.transaction_hash,
+              transactionHash: eventAny.transaction_hash || eventAny.indexed_at_transaction_hash,
               timestamp: new Date().toISOString(),
             });
           } catch (error) {
@@ -405,6 +407,7 @@ class TreasuryIndexer extends EventIndexer {
 
       for (const event of events) {
         const data = event.data as any;
+        const eventAny = event as any;
 
         await transaction(async (client) => {
           // Update request status
@@ -425,9 +428,9 @@ class TreasuryIndexer extends EventIndexer {
               data.id,
               data.payee,
               data.amount,
-              event.transaction_hash,
-              event.transaction_version,
-              event.transaction_block_height,
+              eventAny.transaction_hash || eventAny.indexed_at_transaction_hash,
+              eventAny.transaction_version || eventAny.indexed_at_transaction_version,
+              eventAny.transaction_block_height || eventAny.indexed_at_block_height,
               new Date(),
             ]
           );
@@ -440,7 +443,7 @@ class TreasuryIndexer extends EventIndexer {
             id: data.id,
             payee: data.payee,
             amount: data.amount,
-            transactionHash: event.transaction_hash,
+            transactionHash: eventAny.transaction_hash || eventAny.indexed_at_transaction_hash,
             timestamp: new Date().toISOString(),
           });
         } catch (error) {
@@ -466,12 +469,12 @@ class GovernanceIndexer extends EventIndexer {
       const ledgerInfo = await aptos.getLedgerInfo();
       const latestVersion = BigInt(ledgerInfo.ledger_version);
 
-      if (latestVersion <= this.state.lastProcessedVersion) {
+      if (latestVersion <= (this as any).state.lastProcessedVersion) {
         return;
       }
 
       const batchSize = 100;
-      let currentVersion = this.state.lastProcessedVersion + BigInt(1);
+      let currentVersion = (this as any).state.lastProcessedVersion + BigInt(1);
 
       while (currentVersion <= latestVersion) {
         const endVersion = currentVersion + BigInt(batchSize) - BigInt(1);
@@ -513,6 +516,7 @@ class GovernanceIndexer extends EventIndexer {
 
       for (const event of events) {
         const data = event.data as any;
+        const eventAny = event as any;
 
         await transaction(async (client) => {
           // Ensure election exists
@@ -523,9 +527,9 @@ class GovernanceIndexer extends EventIndexer {
             [
               data.election_id,
               Buffer.from(data.role_name).toString('utf-8'),
-              event.transaction_hash,
-              event.transaction_version,
-              event.transaction_block_height,
+              eventAny.transaction_hash || eventAny.indexed_at_transaction_hash,
+              eventAny.transaction_version || eventAny.indexed_at_transaction_version,
+              eventAny.transaction_block_height || eventAny.indexed_at_block_height,
             ]
           );
 
@@ -539,9 +543,9 @@ class GovernanceIndexer extends EventIndexer {
               data.election_id,
               Buffer.from(data.role_name).toString('utf-8'),
               data.candidate,
-              event.transaction_hash,
-              event.transaction_version,
-              event.transaction_block_height,
+              eventAny.transaction_hash || eventAny.indexed_at_transaction_hash,
+              eventAny.transaction_version || eventAny.indexed_at_transaction_version,
+              eventAny.transaction_block_height || eventAny.indexed_at_block_height,
               new Date(),
             ]
           );
@@ -570,6 +574,7 @@ class GovernanceIndexer extends EventIndexer {
 
       for (const event of events) {
         const data = event.data as any;
+        const eventAny = event as any;
 
         await transaction(async (client) => {
           await client.query(
@@ -583,9 +588,9 @@ class GovernanceIndexer extends EventIndexer {
               data.voter,
               data.candidate,
               data.weight,
-              event.transaction_hash,
-              event.transaction_version,
-              event.transaction_block_height,
+              eventAny.transaction_hash || eventAny.indexed_at_transaction_hash,
+              eventAny.transaction_version || eventAny.indexed_at_transaction_version,
+              eventAny.transaction_block_height || eventAny.indexed_at_block_height,
               new Date(),
             ]
           );
@@ -691,12 +696,12 @@ class ProposalsIndexer extends EventIndexer {
       const ledgerInfo = await aptos.getLedgerInfo();
       const latestVersion = BigInt(ledgerInfo.ledger_version);
 
-      if (latestVersion <= this.state.lastProcessedVersion) {
+      if (latestVersion <= (this as any).state.lastProcessedVersion) {
         return;
       }
 
       const batchSize = 100;
-      let currentVersion = this.state.lastProcessedVersion + BigInt(1);
+      let currentVersion = (this as any).state.lastProcessedVersion + BigInt(1);
 
       while (currentVersion <= latestVersion) {
         const endVersion = currentVersion + BigInt(batchSize) - BigInt(1);
@@ -734,6 +739,7 @@ class ProposalsIndexer extends EventIndexer {
 
       for (const event of events) {
         const data = event.data as any;
+        const eventAny = event as any;
 
         await transaction(async (client) => {
           await client.query(
@@ -749,9 +755,9 @@ class ProposalsIndexer extends EventIndexer {
               '', // Description not in event
               data.start_ts,
               data.end_ts,
-              event.transaction_hash,
-              event.transaction_version,
-              event.transaction_block_height,
+              eventAny.transaction_hash || eventAny.indexed_at_transaction_hash,
+              eventAny.transaction_version || eventAny.indexed_at_transaction_version,
+              eventAny.transaction_block_height || eventAny.indexed_at_block_height,
             ]
           );
         });
@@ -766,7 +772,7 @@ class ProposalsIndexer extends EventIndexer {
             description: '', // Description not in event
             startTs: data.start_ts,
             endTs: data.end_ts,
-            transactionHash: event.transaction_hash,
+            transactionHash: eventAny.transaction_hash || eventAny.indexed_at_transaction_hash,
             timestamp: new Date().toISOString(),
           });
         } catch (error) {
@@ -796,6 +802,7 @@ class ProposalsIndexer extends EventIndexer {
 
       for (const event of events) {
         const data = event.data as any;
+        const eventAny = event as any;
 
         await transaction(async (client) => {
           await client.query(
@@ -808,9 +815,9 @@ class ProposalsIndexer extends EventIndexer {
               data.voter,
               data.vote,
               data.weight,
-              event.transaction_hash,
-              event.transaction_version,
-              event.transaction_block_height,
+              eventAny.transaction_hash || eventAny.indexed_at_transaction_hash,
+              eventAny.transaction_version || eventAny.indexed_at_transaction_version,
+              eventAny.transaction_block_height || eventAny.indexed_at_block_height,
               new Date(),
             ]
           );

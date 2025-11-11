@@ -3,7 +3,7 @@ import http from 'http';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
-import { logger, loggerStream } from './utils/logger';
+import { logger } from './utils/logger';
 import { testConnection, closePool } from './config/database';
 import { getNetworkInfo } from './config/aptos';
 import { initializeWebSocketService, getWebSocketService } from './services/websocket';
@@ -62,7 +62,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 // Health check endpoint
-app.get('/health', async (req: Request, res: Response) => {
+app.get('/health', async (_req: Request, res: Response) => {
   try {
     const dbHealthy = await testConnection();
     const networkInfo = getNetworkInfo();
@@ -76,7 +76,7 @@ app.get('/health', async (req: Request, res: Response) => {
       // WebSocket service not yet initialized
     }
 
-    res.json({
+    return res.json({
       status: 'ok',
       timestamp: new Date().toISOString(),
       environment: NODE_ENV,
@@ -93,7 +93,7 @@ app.get('/health', async (req: Request, res: Response) => {
       version: process.env.npm_package_version || '1.0.0',
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       status: 'error',
       error: error instanceof Error ? error.message : 'Unknown error',
     });
@@ -101,12 +101,12 @@ app.get('/health', async (req: Request, res: Response) => {
 });
 
 // WebSocket metrics endpoint
-app.get('/api/websocket/metrics', (req: Request, res: Response) => {
+app.get('/api/websocket/metrics', (_req: Request, res: Response) => {
   try {
     const wsService = getWebSocketService();
     const metrics = wsService.getMetrics();
 
-    res.json({
+    return res.json({
       success: true,
       metrics: {
         activeConnections: metrics.activeConnections,
@@ -122,7 +122,7 @@ app.get('/api/websocket/metrics', (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'WebSocket not initialized',
     });
@@ -136,8 +136,8 @@ app.use('/api/governance', governanceRoutes);
 app.use('/api/proposals', proposalsRoutes);
 
 // Root endpoint
-app.get('/', (req: Request, res: Response) => {
-  res.json({
+app.get('/', (_req: Request, res: Response) => {
+  return res.json({
     name: 'NYU Aptos Builder Camp Backend',
     version: '1.0.0',
     description: 'Backend API for governance and treasury management platform',
@@ -201,8 +201,8 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 // Static file handlers (prevent 404 spam from browser requests)
-app.get('/favicon.ico', (req: Request, res: Response) => {
-  res.status(204).end(); // No content
+app.get('/favicon.ico', (_req: Request, res: Response) => {
+  return res.status(204).end(); // No content
 });
 
 // Filter Next.js development routes silently
@@ -215,7 +215,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   ) {
     return res.status(404).end();
   }
-  next();
+  return next();
 });
 
 // Enhanced 404 handler with detailed logging
@@ -252,7 +252,7 @@ app.use((req: Request, res: Response) => {
 });
 
 // Error handling middleware
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
   logger.error('Unhandled error', {
     error: err.message,
     stack: err.stack,
@@ -260,7 +260,7 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     method: req.method,
   });
 
-  res.status(500).json({
+  return res.status(500).json({
     error: 'Internal server error',
     message: NODE_ENV === 'development' ? err.message : 'Something went wrong',
   });

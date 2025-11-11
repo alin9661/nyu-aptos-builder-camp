@@ -99,7 +99,7 @@ router.post('/nonce', authLimiter, async (req: Request, res: Response) => {
 
     logger.info('Nonce generated', { address });
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         nonce,
@@ -109,7 +109,7 @@ router.post('/nonce', authLimiter, async (req: Request, res: Response) => {
     });
   } catch (error) {
     logger.error('Failed to generate nonce', { error });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal server error',
       message: 'Failed to generate nonce',
@@ -220,7 +220,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     // Generate JWT tokens
     const tokens = generateTokenPair(user.address, user.role);
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         user: {
@@ -234,7 +234,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     });
   } catch (error) {
     logger.error('Login error', { error });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal server error',
       message: 'Failed to authenticate',
@@ -291,7 +291,7 @@ router.post('/refresh', authLimiter, async (req: Request, res: Response) => {
 
     logger.info('Token refreshed', { address: user.address });
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         accessToken,
@@ -299,7 +299,7 @@ router.post('/refresh', authLimiter, async (req: Request, res: Response) => {
     });
   } catch (error) {
     logger.error('Token refresh error', { error });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal server error',
       message: 'Failed to refresh token',
@@ -354,7 +354,7 @@ router.post('/verify', authLimiter, async (req: Request, res: Response) => {
         });
       }
 
-      res.json({
+      return res.json({
         success: true,
         data: {
           valid: true,
@@ -365,7 +365,7 @@ router.post('/verify', authLimiter, async (req: Request, res: Response) => {
         },
       });
     } catch (error) {
-      res.status(401).json({
+      return res.status(401).json({
         success: false,
         error: 'Invalid token',
         message: error instanceof Error ? error.message : 'Token verification failed',
@@ -373,7 +373,7 @@ router.post('/verify', authLimiter, async (req: Request, res: Response) => {
     }
   } catch (error) {
     logger.error('Token verification error', { error });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal server error',
       message: 'Failed to verify token',
@@ -411,7 +411,7 @@ router.get('/me', verifyAuth, async (req: AuthenticatedRequest, res: Response) =
 
     const user = users[0];
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         user: {
@@ -425,7 +425,7 @@ router.get('/me', verifyAuth, async (req: AuthenticatedRequest, res: Response) =
     });
   } catch (error) {
     logger.error('Failed to get user info', { error });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal server error',
       message: 'Failed to get user info',
@@ -498,7 +498,7 @@ router.put('/profile', verifyAuth, async (req: AuthenticatedRequest, res: Respon
 
     logger.info('User profile updated', { address: req.user.address });
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         user: users[0],
@@ -506,7 +506,7 @@ router.put('/profile', verifyAuth, async (req: AuthenticatedRequest, res: Respon
     });
   } catch (error) {
     logger.error('Failed to update profile', { error });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal server error',
       message: 'Failed to update profile',
@@ -525,7 +525,7 @@ router.post('/logout', verifyAuth, async (req: AuthenticatedRequest, res: Respon
 
     logger.info('User logged out', { address: req.user?.address });
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         message: 'Logged out successfully',
@@ -533,7 +533,7 @@ router.post('/logout', verifyAuth, async (req: AuthenticatedRequest, res: Respon
     });
   } catch (error) {
     logger.error('Logout error', { error });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal server error',
       message: 'Failed to logout',

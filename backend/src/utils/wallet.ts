@@ -1,5 +1,4 @@
-import { ed25519 } from '@noble/ed25519';
-import { Aptos, AptosConfig, Network } from '@aptos-labs/ts-sdk';
+import * as ed25519 from '@noble/ed25519';
 import { logger } from './logger';
 
 /**
