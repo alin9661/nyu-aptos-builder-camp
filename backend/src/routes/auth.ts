@@ -385,7 +385,7 @@ router.post('/verify', authLimiter, async (req: Request, res: Response) => {
  * GET /api/auth/me
  * Get current authenticated user info
  */
-router.get('/me', verifyAuth, async (req: AuthenticatedRequest, res: Response) => {
+router.get('/me', verifyAuth as any, async (req: any, res: Response) => {
   try {
     if (!req.user) {
       return res.status(401).json({
@@ -437,7 +437,7 @@ router.get('/me', verifyAuth, async (req: AuthenticatedRequest, res: Response) =
  * PUT /api/auth/profile
  * Update user profile
  */
-router.put('/profile', verifyAuth, async (req: AuthenticatedRequest, res: Response) => {
+router.put('/profile', verifyAuth as any, async (req: any, res: Response) => {
   try {
     if (!req.user) {
       return res.status(401).json({
@@ -518,7 +518,7 @@ router.put('/profile', verifyAuth, async (req: AuthenticatedRequest, res: Respon
  * POST /api/auth/logout
  * Logout (client-side token deletion)
  */
-router.post('/logout', verifyAuth, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/logout', verifyAuth as any, async (req: any, res: Response) => {
   try {
     // In a stateless JWT system, logout is primarily client-side
     // The client should delete the tokens

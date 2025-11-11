@@ -5,13 +5,14 @@ import { query } from '../config/database';
 import { logger } from '../utils/logger';
 import { validateQuery, paginationSchema } from '../utils/validators';
 import { verifyAuth, requireLeadership, AuthenticatedRequest } from '../middleware/auth';
-import {
-  uploadInvoice,
-  getInvoiceMetadata,
-  getFromIPFS,
-  validateInvoiceFile,
-  getInvoiceDownloadURL,
-} from '../services/ipfs';
+// Temporarily disabled IPFS imports due to module issues
+// import {
+//   uploadInvoice,
+//   getInvoiceMetadata,
+//   getFromIPFS,
+//   validateInvoiceFile,
+//   getInvoiceDownloadURL,
+// } from '../services/ipfs';
 
 const router = Router();
 
@@ -195,7 +196,7 @@ router.get('/stats', async (_req: Request, res: Response) => {
  * Note: This endpoint receives transaction hash after frontend submits to blockchain
  * Requires authentication
  */
-router.post('/reimbursements/submit', verifyAuth, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/reimbursements/submit', verifyAuth as any, async (req: any, res: Response) => {
   try {
     const { transactionHash } = req.body;
 
@@ -352,7 +353,7 @@ router.get('/reimbursements/:id', async (req: Request, res: Response) => {
  * Record approval transaction
  * Requires authentication - Leadership role (advisor, president, VP)
  */
-router.post('/reimbursements/:id/approve', verifyAuth, requireLeadership, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/reimbursements/:id/approve', verifyAuth as any, requireLeadership as any, async (req: any, res: Response) => {
   try {
     const { id } = req.params;
     const { transactionHash } = req.body;
@@ -389,137 +390,140 @@ router.post('/reimbursements/:id/approve', verifyAuth, requireLeadership, async 
   }
 });
 
-/**
- * POST /api/treasury/invoices/upload
- * Upload invoice to IPFS
- * Requires authentication
- */
-router.post('/invoices/upload', verifyAuth, upload.single('invoice'), async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { requestId } = req.body;
+// Temporarily disabled due to IPFS issues
+// /**
+//  * POST /api/treasury/invoices/upload
+//  * Upload invoice to IPFS
+//  * Requires authentication
+//  */
+// router.post('/invoices/upload', verifyAuth as any, upload.single('invoice'), async (req: any, res: Response) => {
+//   try {
+//     const { requestId } = req.body;
 
-    if (!requestId) {
-      return res.status(400).json({
-        success: false,
-        error: 'Request ID is required',
-      });
-    }
+//     if (!requestId) {
+//       return res.status(400).json({
+//         success: false,
+//         error: 'Request ID is required',
+//       });
+//     }
 
-    if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invoice file is required',
-      });
-    }
+//     if (!req.file) {
+//       return res.status(400).json({
+//         success: false,
+//         error: 'Invoice file is required',
+//       });
+//     }
 
-    // Validate file
-    const validation = validateInvoiceFile(
-      req.file.buffer,
-      req.file.originalname,
-      req.file.mimetype
-    );
+//     // Validate file
+//     const validation = validateInvoiceFile(
+//       req.file.buffer,
+//       req.file.originalname,
+//       req.file.mimetype
+//     );
 
-    if (!validation.valid) {
-      return res.status(400).json({
-        success: false,
-        error: validation.error || 'Invalid file',
-      });
-    }
+//     if (!validation.valid) {
+//       return res.status(400).json({
+//         success: false,
+//         error: validation.error || 'Invalid file',
+//       });
+//     }
 
-    // Upload to IPFS
-    const result = await uploadInvoice(
-      parseInt(requestId),
-      req.file.buffer,
-      req.file.originalname,
-      req.file.mimetype
-    );
+//     // Upload to IPFS
+//     const result = await uploadInvoice(
+//       parseInt(requestId),
+//       req.file.buffer,
+//       req.file.originalname,
+//       req.file.mimetype
+//     );
 
-    logger.info('Invoice uploaded successfully', { requestId, ipfsHash: result.ipfsHash });
+//     logger.info('Invoice uploaded successfully', { requestId, ipfsHash: result.ipfsHash });
 
-    return res.json({
-      success: true,
-      data: {
-        ipfsHash: result.ipfsHash,
-        fileSize: result.fileSize,
-        fileName: req.file.originalname,
-        downloadUrl: getInvoiceDownloadURL(result.ipfsHash),
-      },
-    });
-  } catch (error) {
-    logger.error('Failed to upload invoice', { error });
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to upload invoice',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
+//     return res.json({
+//       success: true,
+//       data: {
+//         ipfsHash: result.ipfsHash,
+//         fileSize: result.fileSize,
+//         fileName: req.file.originalname,
+//         downloadUrl: getInvoiceDownloadURL(result.ipfsHash),
+//       },
+//     });
+//   } catch (error) {
+//     logger.error('Failed to upload invoice', { error });
+//     return res.status(500).json({
+//       success: false,
+//       error: 'Failed to upload invoice',
+//       message: error instanceof Error ? error.message : 'Unknown error',
+//     });
+//   }
+// });
 
-/**
- * GET /api/treasury/invoices/:requestId
- * Get invoice metadata
- */
-router.get('/invoices/:requestId', async (req: Request, res: Response) => {
-  try {
-    const { requestId } = req.params;
+// Temporarily disabled due to IPFS issues
+// /**
+//  * GET /api/treasury/invoices/:requestId
+//  * Get invoice metadata
+//  */
+// router.get('/invoices/:requestId', async (req: Request, res: Response) => {
+//   try {
+//     const { requestId } = req.params;
 
-    const metadata = await getInvoiceMetadata(parseInt(requestId));
+//     const metadata = await getInvoiceMetadata(parseInt(requestId));
 
-    if (!metadata) {
-      return res.status(404).json({
-        success: false,
-        error: 'Invoice not found',
-      });
-    }
+//     if (!metadata) {
+//       return res.status(404).json({
+//         success: false,
+//         error: 'Invoice not found',
+//       });
+//     }
 
-    return res.json({
-      success: true,
-      data: metadata,
-    });
-  } catch (error) {
-    logger.error('Failed to fetch invoice metadata', { error });
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to fetch invoice metadata',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
+//     return res.json({
+//       success: true,
+//       data: metadata,
+//     });
+//   } catch (error) {
+//     logger.error('Failed to fetch invoice metadata', { error });
+//     return res.status(500).json({
+//       success: false,
+//       error: 'Failed to fetch invoice metadata',
+//       message: error instanceof Error ? error.message : 'Unknown error',
+//     });
+//   }
+// });
 
-/**
- * GET /api/treasury/invoices/:requestId/download
- * Download invoice from IPFS
- */
-router.get('/invoices/:requestId/download', async (req: Request, res: Response) => {
-  try {
-    const { requestId } = req.params;
+// Temporarily disabled due to IPFS issues
+// /**
+//  * GET /api/treasury/invoices/:requestId/download
+//  * Download invoice from IPFS
+//  */
+// router.get('/invoices/:requestId/download', async (req: Request, res: Response) => {
+//   try {
+//     const { requestId } = req.params;
 
-    const metadata = await getInvoiceMetadata(parseInt(requestId));
+//     const metadata = await getInvoiceMetadata(parseInt(requestId));
 
-    if (!metadata) {
-      return res.status(404).json({
-        success: false,
-        error: 'Invoice not found',
-      });
-    }
+//     if (!metadata) {
+//       return res.status(404).json({
+//         success: false,
+//         error: 'Invoice not found',
+//       });
+//     }
 
-    // Fetch file from IPFS
-    const fileBuffer = await getFromIPFS(metadata.ipfs_hash);
+//     // Fetch file from IPFS
+//     const fileBuffer = await getFromIPFS(metadata.ipfs_hash);
 
-    // Set proper headers
-    res.setHeader('Content-Type', metadata.mime_type);
-    res.setHeader('Content-Disposition', `attachment; filename="${metadata.file_name}"`);
+//     // Set proper headers
+//     res.setHeader('Content-Type', metadata.mime_type);
+//     res.setHeader('Content-Disposition', `attachment; filename="${metadata.file_name}"`);
 
-    // Stream the file buffer
-    return res.send(fileBuffer);
-  } catch (error) {
-    logger.error('Failed to download invoice', { error });
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to download invoice',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
+//     // Stream the file buffer
+//     return res.send(fileBuffer);
+//   } catch (error) {
+//     logger.error('Failed to download invoice', { error });
+//     return res.status(500).json({
+//       success: false,
+//       error: 'Failed to download invoice',
+//       message: error instanceof Error ? error.message : 'Unknown error',
+//     });
+//   }
+// });
 
 export default router;

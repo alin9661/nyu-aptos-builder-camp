@@ -12,7 +12,7 @@ const router = Router();
  * Record proposal creation transaction
  * Requires authentication - E-board or higher
  */
-router.post('/create', verifyAuth, requireEboard, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/create', verifyAuth as any, requireEboard as any, async (req: any, res: Response) => {
   try {
     const { transactionHash } = req.body;
 
@@ -53,7 +53,7 @@ router.post('/create', verifyAuth, requireEboard, async (req: AuthenticatedReque
  * Get all proposals with filtering
  * Optional authentication - adds user context if authenticated
  */
-router.get('/', optionalAuth, validateQuery(paginationSchema), async (req: AuthenticatedRequest, res: Response) => {
+router.get('/', optionalAuth as any, validateQuery(paginationSchema), async (req: any, res: Response) => {
   try {
     const { page = 1, limit = 20, sort = 'desc' } = req.query as any;
     const { status, creator } = req.query;
@@ -237,7 +237,7 @@ router.get('/:id', async (req: Request, res: Response) => {
  * Record vote on proposal transaction
  * Requires authentication
  */
-router.post('/:id/vote', verifyAuth, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/:id/vote', verifyAuth as any, async (req: any, res: Response) => {
   try {
     const { id } = req.params;
     const { transactionHash } = req.body;

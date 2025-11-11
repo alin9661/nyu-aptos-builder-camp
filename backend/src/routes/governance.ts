@@ -220,7 +220,7 @@ router.get('/elections/:electionId/:role', async (req: Request, res: Response) =
  * Record vote transaction
  * Requires authentication
  */
-router.post('/vote', verifyAuth, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/vote', verifyAuth as any, async (req: any, res: Response) => {
   try {
     const { transactionHash } = req.body;
 

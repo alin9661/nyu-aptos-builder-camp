@@ -152,6 +152,13 @@ app.get('/', (_req: Request, res: Response) => {
         me: 'GET /api/auth/me',
         profile: 'PUT /api/auth/profile',
         logout: 'POST /api/auth/logout',
+        sso: {
+          login: 'GET /api/auth/sso/login',
+          callback: 'POST /api/auth/sso/callback',
+          status: 'GET /api/auth/sso/status',
+          metadata: 'GET /api/auth/sso/metadata',
+          logout: 'POST /api/auth/sso/logout',
+        },
       },
       treasury: {
         balance: 'GET /api/treasury/balance',
