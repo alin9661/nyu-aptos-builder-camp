@@ -37,7 +37,7 @@ const data = {
   user: {
     name: "Wallet User",
     email: "Connect wallet to view",
-    avatar: "/avatars/default.jpg",
+    avatar: "/avatars/default.svg",
   },
   navMain: [
     {
