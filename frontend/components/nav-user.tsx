@@ -5,9 +5,11 @@ import {
   IconLogout,
   IconUserCircle,
   IconWallet,
+  IconShieldLock,
 } from "@tabler/icons-react"
 
 import { useWallet } from '@/lib/wallet'
+import { useUser } from '@auth0/nextjs-auth0/client'
 import {
   Avatar,
   AvatarFallback,
@@ -28,6 +30,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar'
+import { Badge } from '@/components/ui/badge'
 
 export function NavUser({
   user,
@@ -40,11 +43,24 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar()
   const { connected, account, disconnect } = useWallet()
+  const { user: auth0User } = useUser()
 
-  const displayName = connected && account?.address
-    ? `${account.address.slice(0, 6)}...${account.address.slice(-4)}`
-    : user.name
-  const displayEmail = connected ? "Connected" : user.email
+  // Priority: Auth0 user > Wallet > Default user
+  const displayName = auth0User?.name ||
+    (connected && account?.address
+      ? `${account.address.slice(0, 6)}...${account.address.slice(-4)}`
+      : user.name)
+
+  const displayEmail = auth0User?.email ||
+    (connected ? "Wallet Connected" : user.email)
+
+  const avatarFallback = auth0User
+    ? (auth0User.name?.[0]?.toUpperCase() || 'U')
+    : (connected ? 'W' : 'U')
+
+  const handleLogout = () => {
+    window.location.href = '/auth/logout';
+  };
 
   return (
     <SidebarMenu>
@@ -55,14 +71,21 @@ export function NavUser({
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <Avatar className="h-8 w-8 rounded-lg grayscale">
-                <AvatarImage src={user.avatar} alt={displayName} />
+              <Avatar className="h-8 w-8 rounded-lg">
+                <AvatarImage src={auth0User?.picture || user.avatar} alt={displayName} />
                 <AvatarFallback className="rounded-lg">
-                  {connected ? 'W' : 'U'}
+                  {avatarFallback}
                 </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{displayName}</span>
+                <div className="flex items-center gap-2">
+                  <span className="truncate font-medium">{displayName}</span>
+                  {auth0User && (
+                    <Badge variant="secondary" className="h-4 px-1 text-[10px]">
+                      Auth0
+                    </Badge>
+                  )}
+                </div>
                 <span className="text-muted-foreground truncate text-xs">
                   {displayEmail}
                 </span>
@@ -79,13 +102,20 @@ export function NavUser({
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={displayName} />
+                  <AvatarImage src={auth0User?.picture || user.avatar} alt={displayName} />
                   <AvatarFallback className="rounded-lg">
-                    {connected ? 'W' : 'U'}
+                    {avatarFallback}
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{displayName}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="truncate font-medium">{displayName}</span>
+                    {auth0User && (
+                      <Badge variant="secondary" className="h-4 px-1 text-[10px]">
+                        Auth0
+                      </Badge>
+                    )}
+                  </div>
                   <span className="text-muted-foreground truncate text-xs">
                     {displayEmail}
                   </span>
@@ -98,10 +128,26 @@ export function NavUser({
                 <IconUserCircle />
                 Profile
               </DropdownMenuItem>
-              {connected && (
-                <DropdownMenuItem>
+              {(connected || auth0User) && (
+                <DropdownMenuItem onClick={() => {
+                  const address = account?.address;
+                  if (address) {
+                    window.open(`https://explorer.aptoslabs.com/account/${address}?network=testnet`, '_blank');
+                  }
+                }}>
                   <IconWallet />
                   View on Explorer
+                </DropdownMenuItem>
+              )}
+              {auth0User && auth0User.sub && (
+                <DropdownMenuItem disabled>
+                  <IconShieldLock />
+                  <div className="flex flex-col">
+                    <span className="text-xs">User ID</span>
+                    <span className="text-[10px] text-muted-foreground font-mono">
+                      {auth0User.sub.slice(0, 20)}...
+                    </span>
+                  </div>
                 </DropdownMenuItem>
               )}
             </DropdownMenuGroup>
@@ -110,6 +156,12 @@ export function NavUser({
               <DropdownMenuItem onClick={() => disconnect()}>
                 <IconLogout />
                 Disconnect Wallet
+              </DropdownMenuItem>
+            )}
+            {auth0User && (
+              <DropdownMenuItem onClick={handleLogout}>
+                <IconLogout />
+                Sign Out
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>

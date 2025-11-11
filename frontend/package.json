@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@aptos-labs/ts-sdk": "^5.1.1",
+    "@auth0/nextjs-auth0": "^4.12.0",
     "@dnd-kit/core": "latest",
     "@dnd-kit/modifiers": "latest",
     "@dnd-kit/sortable": "latest",
