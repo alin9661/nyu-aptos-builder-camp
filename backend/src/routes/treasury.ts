@@ -3,8 +3,8 @@ import multer from 'multer';
 import { aptos, MODULES, COIN_TYPE, formatCoinAmount } from '../config/aptos';
 import { query } from '../config/database';
 import { logger } from '../utils/logger';
-import { validateBody, validateQuery, paginationSchema } from '../utils/validators';
-import { verifyAuth, optionalAuth, requireLeadership, requireWalletOwnership, AuthenticatedRequest } from '../middleware/auth';
+import { validateQuery, paginationSchema } from '../utils/validators';
+import { verifyAuth, requireLeadership, AuthenticatedRequest } from '../middleware/auth';
 import {
   uploadInvoice,
   getInvoiceMetadata,
@@ -21,7 +21,7 @@ const upload = multer({
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB limit
   },
-  fileFilter: (req, file, cb) => {
+  fileFilter: (_req, file, cb) => {
     // Validate file type
     const allowedMimes = [
       'application/pdf',
@@ -44,7 +44,7 @@ const upload = multer({
  * GET /api/treasury/balance
  * Get current vault balance from blockchain
  */
-router.get('/balance', async (req: Request, res: Response) => {
+router.get('/balance', async (_req: Request, res: Response) => {
   try {
     // Call view function to get balance
     const balance = await aptos.view({
@@ -57,7 +57,7 @@ router.get('/balance', async (req: Request, res: Response) => {
 
     const balanceAmount = BigInt(balance[0] as number);
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         balance: balanceAmount.toString(),
@@ -68,7 +68,7 @@ router.get('/balance', async (req: Request, res: Response) => {
     });
   } catch (error) {
     logger.error('Failed to fetch treasury balance', { error });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to fetch treasury balance',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -102,7 +102,7 @@ router.get('/transactions', validateQuery(paginationSchema), async (req: Request
       [limit, offset]
     );
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         transactions: transactions.map(tx => ({
@@ -122,7 +122,7 @@ router.get('/transactions', validateQuery(paginationSchema), async (req: Request
     });
   } catch (error) {
     logger.error('Failed to fetch treasury transactions', { error });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to fetch treasury transactions',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -134,7 +134,7 @@ router.get('/transactions', validateQuery(paginationSchema), async (req: Request
  * GET /api/treasury/stats
  * Get treasury statistics
  */
-router.get('/stats', async (req: Request, res: Response) => {
+router.get('/stats', async (_req: Request, res: Response) => {
   try {
     // Get aggregate stats
     const stats = await query(`
@@ -156,7 +156,7 @@ router.get('/stats', async (req: Request, res: Response) => {
       FROM reimbursement_requests
     `);
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         deposits: {
@@ -181,7 +181,7 @@ router.get('/stats', async (req: Request, res: Response) => {
     });
   } catch (error) {
     logger.error('Failed to fetch treasury stats', { error });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to fetch treasury stats',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -213,7 +213,7 @@ router.post('/reimbursements/submit', verifyAuth, async (req: AuthenticatedReque
 
     logger.info('Reimbursement submitted', { transactionHash, version: txn.version });
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         transactionHash,
@@ -223,7 +223,7 @@ router.post('/reimbursements/submit', verifyAuth, async (req: AuthenticatedReque
     });
   } catch (error) {
     logger.error('Failed to process reimbursement submission', { error });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to process reimbursement submission',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -260,7 +260,7 @@ router.get('/reimbursements', validateQuery(paginationSchema), async (req: Reque
       [limit, offset]
     );
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         requests: requests.map(req => ({
@@ -278,7 +278,7 @@ router.get('/reimbursements', validateQuery(paginationSchema), async (req: Reque
     });
   } catch (error) {
     logger.error('Failed to fetch reimbursements', { error });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to fetch reimbursements',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -328,7 +328,7 @@ router.get('/reimbursements/:id', async (req: Request, res: Response) => {
     );
 
     const request = requests[0];
-    res.json({
+    return res.json({
       success: true,
       data: {
         ...request,
@@ -339,7 +339,7 @@ router.get('/reimbursements/:id', async (req: Request, res: Response) => {
     });
   } catch (error) {
     logger.error('Failed to fetch reimbursement details', { error });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to fetch reimbursement details',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -371,7 +371,7 @@ router.post('/reimbursements/:id/approve', verifyAuth, requireLeadership, async 
 
     logger.info('Reimbursement approved', { requestId: id, transactionHash, version: txn.version });
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         transactionHash,
@@ -381,7 +381,7 @@ router.post('/reimbursements/:id/approve', verifyAuth, requireLeadership, async 
     });
   } catch (error) {
     logger.error('Failed to process reimbursement approval', { error });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to process reimbursement approval',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -436,7 +436,7 @@ router.post('/invoices/upload', verifyAuth, upload.single('invoice'), async (req
 
     logger.info('Invoice uploaded successfully', { requestId, ipfsHash: result.ipfsHash });
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         ipfsHash: result.ipfsHash,
@@ -447,7 +447,7 @@ router.post('/invoices/upload', verifyAuth, upload.single('invoice'), async (req
     });
   } catch (error) {
     logger.error('Failed to upload invoice', { error });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to upload invoice',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -472,13 +472,13 @@ router.get('/invoices/:requestId', async (req: Request, res: Response) => {
       });
     }
 
-    res.json({
+    return res.json({
       success: true,
       data: metadata,
     });
   } catch (error) {
     logger.error('Failed to fetch invoice metadata', { error });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to fetch invoice metadata',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -511,10 +511,10 @@ router.get('/invoices/:requestId/download', async (req: Request, res: Response) 
     res.setHeader('Content-Disposition', `attachment; filename="${metadata.file_name}"`);
 
     // Stream the file buffer
-    res.send(fileBuffer);
+    return res.send(fileBuffer);
   } catch (error) {
     logger.error('Failed to download invoice', { error });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to download invoice',
       message: error instanceof Error ? error.message : 'Unknown error',
