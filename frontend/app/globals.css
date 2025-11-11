@@ -292,3 +292,42 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Wallet Components - Confetti Animation */
+@keyframes confetti {
+  0% {
+    transform: translateY(0) rotateZ(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotateZ(360deg);
+    opacity: 0;
+  }
+}
+
+.animate-confetti {
+  animation: confetti linear forwards;
+}
+
+/* Wallet Components - Gradient Backgrounds */
+.wallet-gradient {
+  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+}
+
+.wallet-gradient-hover {
+  background: linear-gradient(135deg, #7c3aed 0%, #9333ea 100%);
+}
+
+/* Wallet Components - Glow Effect */
+@keyframes wallet-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(139, 92, 246, 0.5);
+  }
+}
+
+.wallet-glow {
+  animation: wallet-glow 2s ease-in-out infinite;
+}

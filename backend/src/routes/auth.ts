@@ -267,34 +267,72 @@ router.post('/sso-login', authLimiter, async (req: Request, res: Response) => {
     }
 
     // Look up user by Auth0 ID
-    const users = await query(
+    let users = await query(
       'SELECT address, role, display_name, email FROM users WHERE sso_id = $1 AND sso_provider = $2',
       [auth0_id, 'google']
     );
 
+    let user;
+    let isNewUser = false;
+
     if (users.length === 0) {
-      logger.warn('SSO login failed - user not found', { auth0_id, email });
-      return res.status(404).json({
-        success: false,
-        error: 'User not found',
-        message: 'No user found with this Auth0 ID. Please complete registration first.',
-      });
-    }
+      // Auto-register new user with Aptos wallet
+      logger.info('SSO login - creating new user', { auth0_id, email });
 
-    const user = users[0];
+      try {
+        const walletResult = await WalletService.createWalletForUser(
+          auth0_id,
+          'google',
+          email
+        );
 
-    // Optional: Verify email matches if provided
-    if (email && user.email && user.email !== email) {
-      logger.warn('SSO login - email mismatch', {
-        auth0_id,
-        providedEmail: email,
-        storedEmail: user.email
-      });
-      return res.status(400).json({
-        success: false,
-        error: 'Email mismatch',
-        message: 'Email does not match user record',
-      });
+        logger.info('SSO login - new user created successfully', {
+          auth0_id,
+          address: walletResult.address,
+          email: walletResult.email,
+        });
+
+        // Fetch the newly created user
+        users = await query(
+          'SELECT address, role, display_name, email FROM users WHERE sso_id = $1 AND sso_provider = $2',
+          [auth0_id, 'google']
+        );
+
+        if (users.length === 0) {
+          throw new Error('Failed to retrieve newly created user');
+        }
+
+        user = users[0];
+        isNewUser = true;
+      } catch (walletError) {
+        logger.error('SSO login - failed to create user', {
+          auth0_id,
+          email,
+          error: walletError,
+        });
+
+        return res.status(500).json({
+          success: false,
+          error: 'Registration failed',
+          message: 'Failed to create user account and wallet',
+        });
+      }
+    } else {
+      user = users[0];
+
+      // Optional: Verify email matches if provided (only for existing users)
+      if (email && user.email && user.email !== email) {
+        logger.warn('SSO login - email mismatch', {
+          auth0_id,
+          providedEmail: email,
+          storedEmail: user.email
+        });
+        return res.status(400).json({
+          success: false,
+          error: 'Email mismatch',
+          message: 'Email does not match user record',
+        });
+      }
     }
 
     // Generate JWT tokens
@@ -303,7 +341,8 @@ router.post('/sso-login', authLimiter, async (req: Request, res: Response) => {
     logger.info('SSO user logged in', {
       address: user.address,
       role: user.role,
-      email: user.email
+      email: user.email,
+      isNewUser,
     });
 
     return res.json({
@@ -316,6 +355,7 @@ router.post('/sso-login', authLimiter, async (req: Request, res: Response) => {
           email: user.email,
         },
         ...tokens,
+        isNewUser,
       },
     });
   } catch (error) {

@@ -29,6 +29,21 @@ export interface LoginMessage {
 }
 
 /**
+ * Format message according to Aptos signing standard (Petra format)
+ * Per Petra docs: https://petra.app/docs/signing-a-message
+ * Format: APTOS\nnonce: [value]\nmessage: [user message]
+ * @param message - The message to format
+ * @param nonce - Optional nonce
+ * @returns Formatted message for Aptos wallet signing
+ */
+const formatAptosSigningMessage = (message: string, nonce?: string): string => {
+  if (nonce) {
+    return `APTOS\nnonce: ${nonce}\nmessage: ${message}`;
+  }
+  return `APTOS\nmessage: ${message}`;
+};
+
+/**
  * Verify a wallet signature for authentication
  * @param request - Signature verification request
  * @returns True if signature is valid
@@ -37,7 +52,7 @@ export const verifyWalletSignature = async (
   request: SignatureVerificationRequest
 ): Promise<boolean> => {
   try {
-    const { message, signature, publicKey, address } = request;
+    const { message, signature, publicKey, address, nonce } = request;
 
     // Validate inputs
     if (!message || !signature || !publicKey || !address) {
@@ -52,7 +67,20 @@ export const verifyWalletSignature = async (
     // Convert hex strings to Uint8Array
     const signatureBytes = hexToBytes(cleanSignature);
     const publicKeyBytes = hexToBytes(cleanPublicKey);
-    const messageBytes = new TextEncoder().encode(message);
+
+    // Format message according to Aptos signing standard
+    const formattedMessage = formatAptosSigningMessage(message, nonce);
+    const messageBytes = new TextEncoder().encode(formattedMessage);
+
+    // Debug logging
+    logger.debug('Signature verification details', {
+      address,
+      rawMessage: message.substring(0, 100) + '...',
+      formattedMessage: formattedMessage.substring(0, 150) + '...',
+      signatureLength: cleanSignature.length,
+      publicKeyLength: cleanPublicKey.length,
+      nonce: nonce
+    });
 
     // Verify the signature using Ed25519
     const isValid = await ed25519.verify(signatureBytes, messageBytes, publicKeyBytes);

@@ -1,10 +1,9 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
-import { WalletProvider } from '@/lib/wallet/WalletProvider'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { Toaster } from '@/components/ui/toast'
-import { NotificationCenterProvider } from '@/components/NotificationCenter'
+import { Providers } from './providers'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
@@ -25,11 +24,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={`font-sans antialiased`}>
         <ErrorBoundary>
-          <NotificationCenterProvider>
-            <WalletProvider autoConnect={true}>
-              {children}
-            </WalletProvider>
-          </NotificationCenterProvider>
+          <Providers>
+            {children}
+          </Providers>
         </ErrorBoundary>
         <Toaster />
         <Analytics />

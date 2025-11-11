@@ -8,6 +8,8 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "indexer": "ts-node src/services/indexer.ts",
+    "assign-wallets": "ts-node src/scripts/assign-wallets-retroactive.ts",
+    "verify-setup": "ts-node src/scripts/verify-setup.ts",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit",
     "test": "jest --coverage --verbose",

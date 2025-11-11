@@ -8,8 +8,9 @@ import { Aptos, AptosConfig, Network } from '@aptos-labs/ts-sdk';
 // Configuration
 const NETWORK = (process.env.NEXT_PUBLIC_APTOS_NETWORK as Network) || Network.TESTNET;
 const NODE_URL = process.env.NEXT_PUBLIC_APTOS_NODE_URL;
-const MODULE_ADDRESS = process.env.NEXT_PUBLIC_MODULE_ADDRESS || '0xCAFE';
-const APTOS_COIN_TYPE = '0x1::aptos_coin::AptosCoin';
+export const MODULE_ADDRESS = process.env.NEXT_PUBLIC_MODULE_ADDRESS || '0xCAFE';
+export const COIN_TYPE = '0x1::aptos_coin::AptosCoin';
+const APTOS_COIN_TYPE = COIN_TYPE; // Internal alias for backward compatibility
 const MODULE_NAME = 'nyu_aptos_builder_camp';
 
 // Initialize Aptos client

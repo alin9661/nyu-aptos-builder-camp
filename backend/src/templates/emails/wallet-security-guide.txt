@@ -1,0 +1,104 @@
+WALLET SECURITY GUIDE
+Understanding Your Aptos Wallet
+
+This guide will help you understand how your Aptos wallet works and how we keep it secure.
+
+═══════════════════════════════════════════════════════
+
+WHAT IS A CRYPTOCURRENCY WALLET?
+
+A cryptocurrency wallet is like a digital bank account that allows you to:
+- Store and manage your digital assets (APT tokens)
+- Send and receive transactions on the blockchain
+- Interact with smart contracts and applications
+- Prove ownership and sign transactions
+
+═══════════════════════════════════════════════════════
+
+PUBLIC VS PRIVATE KEYS
+
+📍 PUBLIC KEY (ADDRESS)
+Like your bank account number - safe to share with anyone.
+{{walletAddress}}
+
+🔑 PRIVATE KEY
+Like your PIN code - must NEVER be shared with anyone.
+We securely manage this for you.
+
+═══════════════════════════════════════════════════════
+
+HOW WE SECURE YOUR WALLET
+
+Your wallet is protected with enterprise-grade security:
+
+✓ AES-256-GCM Encryption: Military-grade encryption protects your private key
+✓ Secure Storage: Private keys are stored in encrypted databases with restricted access
+✓ Access Control: Only you can authorize transactions through your NYU SSO login
+✓ Audit Logging: All wallet operations are logged for security monitoring
+✓ Regular Backups: Encrypted backups ensure your wallet can be recovered
+
+═══════════════════════════════════════════════════════
+
+WHAT YOU CAN AND CANNOT DO
+
+✅ YOU CAN:
+- View your wallet address and balance anytime
+- Sign transactions through the NYU Nexus platform
+- Participate in governance and reimbursements
+- View your transaction history on the blockchain explorer
+
+❌ YOU CANNOT:
+- Export or view your private key (for security reasons)
+- Use this wallet in external applications or wallets
+- Manually approve transactions outside our platform
+
+═══════════════════════════════════════════════════════
+
+ACCOUNT RECOVERY
+
+Good news: Since we manage your wallet, you don't need to worry about losing your private keys!
+
+As long as you can access your NYU SSO account, you can access your wallet. If you lose access to your NYU account, contact NYU IT services for account recovery.
+
+═══════════════════════════════════════════════════════
+
+SECURITY BEST PRACTICES
+
+⚠️ Never share your NYU credentials - Your SSO login protects your wallet
+⚠️ Verify transaction details - Always review amounts and recipients before confirming
+⚠️ Beware of phishing - Only access NYU Nexus through official NYU domains
+⚠️ Enable 2FA - Use two-factor authentication on your NYU account
+⚠️ Report suspicious activity - Contact us immediately if you notice unauthorized transactions
+
+═══════════════════════════════════════════════════════
+
+WATCH OUT FOR THESE SCAMS
+
+• Phishing Emails: We'll never ask for your password via email
+• Fake Websites: Always check the URL is an official NYU domain
+• Social Engineering: NYU support will never ask for your credentials
+• Urgent Requests: Legitimate notifications won't pressure you to act immediately
+
+═══════════════════════════════════════════════════════
+
+ADDITIONAL RESOURCES
+
+• Aptos Developer Documentation: https://aptoslabs.com/developers
+• Aptos Blockchain Explorer: https://explorer.aptoslabs.com
+• FAQs: {{docsUrl}}/faqs
+• Support Center: {{supportUrl}}
+
+═══════════════════════════════════════════════════════
+
+Questions? Contact our support team:
+{{supportUrl}}
+
+View full documentation:
+{{docsUrl}}
+
+---
+NYU Nexus - Security & Education Team
+
+Unsubscribe from educational emails: {{unsubscribeUrl}}
+
+© {{currentYear}} New York University. All rights reserved.
