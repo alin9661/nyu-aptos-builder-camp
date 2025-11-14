@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { AppSidebar } from '@/components/app-sidebar'
-import { ChartAreaInteractive } from '@/components/chart-area-interactive'
 import { DashboardStats } from '@/components/DashboardStats'
 import { TreasuryBalance } from '@/components/TreasuryBalance'
 import { ReimbursementsList } from '@/components/ReimbursementsList'
@@ -68,11 +67,6 @@ export default function Page() {
 
                 {/* Dashboard Stats */}
                 <DashboardStats />
-
-                {/* Charts Section */}
-                <div className="px-4 lg:px-6">
-                  <ChartAreaInteractive />
-                </div>
 
                 {/* Treasury Balance Card */}
                 <div className="px-4 lg:px-6">
