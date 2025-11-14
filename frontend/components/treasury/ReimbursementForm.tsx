@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -19,6 +19,8 @@ import {
 import { toast } from '@/components/ui/toast';
 import { submitReimbursement } from '@/lib/api/treasury';
 import { Upload, FileText, X, Loader2 } from 'lucide-react';
+import { useSubmitReimbursement } from '@/hooks/useSubmitReimbursement';
+import TransactionStatusModal from '@/components/TransactionStatusModal';
 
 // Form validation schema
 const reimbursementSchema = z.object({
@@ -44,8 +46,17 @@ interface ReimbursementFormProps {
 
 export function ReimbursementForm({ onSuccess, onCancel }: ReimbursementFormProps) {
   const [file, setFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const {
+    submit,
+    state,
+    transactionHash,
+    error,
+    transactionDetails,
+    explorerUrl,
+    reset,
+    retry,
+  } = useSubmitReimbursement();
 
   const {
     register,
@@ -85,38 +96,49 @@ export function ReimbursementForm({ onSuccess, onCancel }: ReimbursementFormProp
 
   const onSubmit = async (data: ReimbursementFormData) => {
     try {
-      setSubmitting(true);
-
       // Validate receipt upload
       if (!file) {
         toast.error('Please upload a receipt');
         return;
       }
 
-      // TODO: In a real implementation, this would:
-      // 1. Upload the file to IPFS or cloud storage
-      // 2. Create a blockchain transaction with the reimbursement data
-      // 3. Submit the transaction hash to the backend
+      // Show modal
+      setShowModal(true);
 
-      // Simulated transaction hash for demonstration
-      const mockTransactionHash = '0x' + Math.random().toString(16).substring(2, 66);
+      // TODO: Upload file to IPFS when enabled
+      // For now, we'll pass empty invoice URI and hash
+      const invoiceUri = '';
+      const invoiceHash = '';
 
-      // Submit to backend
-      const response = await submitReimbursement(mockTransactionHash);
+      // Submit blockchain transaction
+      await submit({
+        payee: data.payee,
+        amount: parseFloat(data.amount),
+        description: `${data.category}: ${data.description}`,
+        invoiceUri,
+        invoiceHash,
+      });
 
-      if (response.success) {
+      // On success, call onSuccess callback
+      if (state === 'success') {
         toast.success('Reimbursement request submitted successfully!');
         onSuccess?.();
-      } else {
-        toast.error(response.error || 'Failed to submit reimbursement request');
       }
     } catch (error) {
       console.error('Reimbursement submission error:', error);
       toast.error('An unexpected error occurred');
-    } finally {
-      setSubmitting(false);
     }
   };
+
+  useEffect(() => {
+    if (state === 'success') {
+      setTimeout(() => {
+        setShowModal(false);
+        reset();
+        onSuccess?.();
+      }, 2000);
+    }
+  }, [state, reset, onSuccess]);
 
   return (
     <Card>
@@ -252,7 +274,7 @@ export function ReimbursementForm({ onSuccess, onCancel }: ReimbursementFormProp
                     variant="ghost"
                     size="sm"
                     onClick={removeFile}
-                    disabled={uploading || submitting}
+                    disabled={state !== 'idle' && state !== 'error' && state !== 'success'}
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -265,13 +287,15 @@ export function ReimbursementForm({ onSuccess, onCancel }: ReimbursementFormProp
           <div className="flex gap-4 pt-4">
             <Button
               type="submit"
-              disabled={submitting || uploading}
+              disabled={state !== 'idle' && state !== 'error' && state !== 'success'}
               className="flex-1"
             >
-              {submitting ? (
+              {['signing', 'submitted', 'confirming', 'recording'].includes(state) ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Submitting...
+                  {state === 'signing' ? 'Signing...' :
+                   state === 'submitted' ? 'Submitted...' :
+                   state === 'confirming' ? 'Confirming...' : 'Recording...'}
                 </>
               ) : (
                 'Submit Request'
@@ -282,7 +306,7 @@ export function ReimbursementForm({ onSuccess, onCancel }: ReimbursementFormProp
                 type="button"
                 variant="outline"
                 onClick={onCancel}
-                disabled={submitting || uploading}
+                disabled={state !== 'idle' && state !== 'error' && state !== 'success'}
               >
                 Cancel
               </Button>
@@ -290,6 +314,19 @@ export function ReimbursementForm({ onSuccess, onCancel }: ReimbursementFormProp
           </div>
         </form>
       </CardContent>
+      <TransactionStatusModal
+        isOpen={showModal}
+        onClose={() => {
+          setShowModal(false);
+          reset();
+        }}
+        state={state}
+        transactionHash={transactionHash}
+        error={error}
+        transactionDetails={transactionDetails}
+        explorerUrl={explorerUrl}
+        onRetry={retry}
+      />
     </Card>
   );
 }

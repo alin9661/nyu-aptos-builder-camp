@@ -16,6 +16,8 @@ interface WalletContextType extends WalletState {
   connect: () => Promise<void>;
   disconnect: () => void;
   signAndSubmitTransaction: (transaction: any) => Promise<any>;
+  wallet: boolean; // Alias for connected
+  account: { address: string } | null; // Account object with address
 }
 
 // Create context
@@ -151,6 +153,8 @@ export function AptosWalletProvider({ children }: AptosWalletProviderProps) {
     connect,
     disconnect,
     signAndSubmitTransaction,
+    wallet: state.connected, // Alias for compatibility
+    account: state.address ? { address: state.address } : null, // Account object
   };
 
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;
@@ -165,4 +169,11 @@ export function useWallet() {
     throw new Error('useWallet must be used within AptosWalletProvider');
   }
   return context;
+}
+
+/**
+ * Alias for useWallet (for compatibility)
+ */
+export function useAptosWallet() {
+  return useWallet();
 }

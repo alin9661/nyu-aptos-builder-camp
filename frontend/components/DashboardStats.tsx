@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useTreasuryBalance, useTreasuryStats } from '@/hooks/useTreasury';
 import { useProposalStats } from '@/hooks/useProposals';
 import { useGovernanceStats } from '@/hooks/useGovernance';
@@ -16,12 +17,66 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Wallet, FileText, Vote, Users } from 'lucide-react';
 
 export function DashboardStats() {
-  const { data: balance, loading: balanceLoading } = useTreasuryBalance(true);
-  const { data: treasuryStats, loading: treasuryLoading } = useTreasuryStats(true);
-  const { data: proposalStats, loading: proposalLoading } = useProposalStats(true);
-  const { data: governanceStats, loading: governanceLoading } = useGovernanceStats(true);
+  const { data: balance, loading: balanceLoading, refetch: refetchBalance } = useTreasuryBalance(true);
+  const { data: treasuryStats, loading: treasuryLoading, refetch: refetchTreasuryStats } = useTreasuryStats(true);
+  const { data: proposalStats, loading: proposalLoading, refetch: refetchProposalStats } = useProposalStats(true);
+  const { data: governanceStats, loading: governanceLoading, refetch: refetchGovernanceStats } = useGovernanceStats(true);
 
   const loading = balanceLoading || treasuryLoading || proposalLoading || governanceLoading;
+
+  // Real-time updates via WebSocket
+  useEffect(() => {
+    // Connect to WebSocket for real-time updates
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+
+    let ws: WebSocket | null = null;
+
+    try {
+      ws = new WebSocket(wsUrl);
+
+      ws.onopen = () => {
+        console.log('WebSocket connected for dashboard stats');
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+
+          // Refresh on treasury and reimbursement events
+          if (message.channel === 'treasury:balance' ||
+              message.channel === 'treasury:deposit' ||
+              message.channel === 'reimbursements:new' ||
+              message.channel === 'reimbursements:approved' ||
+              message.channel === 'reimbursements:paid') {
+            console.log('Dashboard stats update received, refreshing...');
+            refetchBalance();
+            refetchTreasuryStats();
+            refetchProposalStats();
+            refetchGovernanceStats();
+          }
+        } catch (err) {
+          console.error('WebSocket message parse error:', err);
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+      };
+
+      ws.onclose = () => {
+        console.log('WebSocket disconnected');
+      };
+    } catch (err) {
+      console.error('Failed to connect WebSocket:', err);
+    }
+
+    return () => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
+    };
+  }, [refetchBalance, refetchTreasuryStats, refetchProposalStats, refetchGovernanceStats]);
 
   if (loading) {
     return (

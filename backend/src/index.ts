@@ -13,6 +13,7 @@ import authRoutes from './routes/auth';
 import treasuryRoutes from './routes/treasury';
 import governanceRoutes from './routes/governance';
 import proposalsRoutes from './routes/proposals';
+import webhookRoutes from './routes/webhook';
 
 // Load environment variables
 dotenv.config();
@@ -131,6 +132,7 @@ app.get('/api/websocket/metrics', (_req: Request, res: Response) => {
 
 // API routes
 app.use('/api/auth', authRoutes);
+app.use('/api/auth/webhook', webhookRoutes);
 app.use('/api/treasury', treasuryRoutes);
 app.use('/api/governance', governanceRoutes);
 app.use('/api/proposals', proposalsRoutes);
@@ -152,6 +154,17 @@ app.get('/', (_req: Request, res: Response) => {
         me: 'GET /api/auth/me',
         profile: 'PUT /api/auth/profile',
         logout: 'POST /api/auth/logout',
+        sso: {
+          login: 'GET /api/auth/sso/login',
+          callback: 'POST /api/auth/sso/callback',
+          status: 'GET /api/auth/sso/status',
+          metadata: 'GET /api/auth/sso/metadata',
+          logout: 'POST /api/auth/sso/logout',
+        },
+        webhook: {
+          createWallet: 'POST /api/auth/webhook/create-wallet',
+          health: 'GET /api/auth/webhook/health',
+        },
       },
       treasury: {
         balance: 'GET /api/treasury/balance',

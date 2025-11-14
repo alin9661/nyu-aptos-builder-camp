@@ -17,6 +17,7 @@ import {
   SignatureVerificationRequest,
 } from '../utils/wallet';
 import { verifyAuth, AuthenticatedRequest } from '../middleware/auth';
+import { WalletService } from '../services/walletService';
 
 const router = Router();
 
@@ -243,6 +244,131 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
 });
 
 /**
+ * POST /api/auth/sso-login
+ * Exchange Auth0 SSO authentication for backend JWT tokens
+ *
+ * This endpoint allows users who authenticated via Auth0 (Google SSO)
+ * to obtain backend JWT tokens for API access.
+ *
+ * @body {string} auth0_id - The Auth0 user ID
+ * @body {string} [email] - Optional email for additional verification
+ */
+router.post('/sso-login', authLimiter, async (req: Request, res: Response) => {
+  try {
+    const { auth0_id, email } = req.body;
+
+    // Validate auth0_id
+    if (!auth0_id || typeof auth0_id !== 'string') {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required field',
+        message: 'Please provide auth0_id',
+      });
+    }
+
+    // Look up user by Auth0 ID
+    let users = await query(
+      'SELECT address, role, display_name, email FROM users WHERE sso_id = $1 AND sso_provider = $2',
+      [auth0_id, 'google']
+    );
+
+    let user;
+    let isNewUser = false;
+
+    if (users.length === 0) {
+      // Auto-register new user with Aptos wallet
+      logger.info('SSO login - creating new user', { auth0_id, email });
+
+      try {
+        const walletResult = await WalletService.createWalletForUser(
+          auth0_id,
+          'google',
+          email
+        );
+
+        logger.info('SSO login - new user created successfully', {
+          auth0_id,
+          address: walletResult.address,
+          email: walletResult.email,
+        });
+
+        // Fetch the newly created user
+        users = await query(
+          'SELECT address, role, display_name, email FROM users WHERE sso_id = $1 AND sso_provider = $2',
+          [auth0_id, 'google']
+        );
+
+        if (users.length === 0) {
+          throw new Error('Failed to retrieve newly created user');
+        }
+
+        user = users[0];
+        isNewUser = true;
+      } catch (walletError) {
+        logger.error('SSO login - failed to create user', {
+          auth0_id,
+          email,
+          error: walletError,
+        });
+
+        return res.status(500).json({
+          success: false,
+          error: 'Registration failed',
+          message: 'Failed to create user account and wallet',
+        });
+      }
+    } else {
+      user = users[0];
+
+      // Optional: Verify email matches if provided (only for existing users)
+      if (email && user.email && user.email !== email) {
+        logger.warn('SSO login - email mismatch', {
+          auth0_id,
+          providedEmail: email,
+          storedEmail: user.email
+        });
+        return res.status(400).json({
+          success: false,
+          error: 'Email mismatch',
+          message: 'Email does not match user record',
+        });
+      }
+    }
+
+    // Generate JWT tokens
+    const tokens = generateTokenPair(user.address, user.role);
+
+    logger.info('SSO user logged in', {
+      address: user.address,
+      role: user.role,
+      email: user.email,
+      isNewUser,
+    });
+
+    return res.json({
+      success: true,
+      data: {
+        user: {
+          address: user.address,
+          role: user.role,
+          displayName: user.display_name,
+          email: user.email,
+        },
+        ...tokens,
+        isNewUser,
+      },
+    });
+  } catch (error) {
+    logger.error('SSO login error', { error });
+    return res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: 'Failed to authenticate with SSO',
+    });
+  }
+});
+
+/**
  * POST /api/auth/refresh
  * Refresh access token using refresh token
  */
@@ -385,7 +511,7 @@ router.post('/verify', authLimiter, async (req: Request, res: Response) => {
  * GET /api/auth/me
  * Get current authenticated user info
  */
-router.get('/me', verifyAuth, async (req: AuthenticatedRequest, res: Response) => {
+router.get('/me', verifyAuth as any, async (req: any, res: Response) => {
   try {
     if (!req.user) {
       return res.status(401).json({
@@ -437,7 +563,7 @@ router.get('/me', verifyAuth, async (req: AuthenticatedRequest, res: Response) =
  * PUT /api/auth/profile
  * Update user profile
  */
-router.put('/profile', verifyAuth, async (req: AuthenticatedRequest, res: Response) => {
+router.put('/profile', verifyAuth as any, async (req: any, res: Response) => {
   try {
     if (!req.user) {
       return res.status(401).json({
@@ -518,7 +644,7 @@ router.put('/profile', verifyAuth, async (req: AuthenticatedRequest, res: Respon
  * POST /api/auth/logout
  * Logout (client-side token deletion)
  */
-router.post('/logout', verifyAuth, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/logout', verifyAuth as any, async (req: any, res: Response) => {
   try {
     // In a stateless JWT system, logout is primarily client-side
     // The client should delete the tokens
@@ -537,6 +663,221 @@ router.post('/logout', verifyAuth, async (req: AuthenticatedRequest, res: Respon
       success: false,
       error: 'Internal server error',
       message: 'Failed to logout',
+    });
+  }
+});
+
+/**
+ * POST /api/auth/create-wallet
+ * Create an Aptos wallet for authenticated user
+ */
+router.post('/create-wallet', verifyAuth as any, async (req: any, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: 'Unauthorized',
+        message: 'Not authenticated',
+      });
+    }
+
+    const address = req.user.address;
+
+    // Check if user already has a wallet
+    const users = await query(
+      'SELECT address, wallet_public_key, wallet_generated, wallet_created_at FROM users WHERE address = $1',
+      [address]
+    );
+
+    if (users.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found',
+        message: 'User does not exist',
+      });
+    }
+
+    const user = users[0];
+
+    // If user already has a wallet, return it
+    if (user.wallet_public_key && user.wallet_generated) {
+      logger.info('User already has wallet', { address });
+
+      return res.json({
+        success: true,
+        data: {
+          wallet: {
+            address: user.address,
+            publicKey: user.wallet_public_key,
+            isAutoGenerated: true,
+            createdAt: user.wallet_created_at,
+          },
+          message: 'Wallet already exists',
+          existing: true,
+        },
+      });
+    }
+
+    // Generate new wallet
+    logger.info('Creating wallet for user', { address });
+
+    try {
+      const wallet = await WalletService.generateWallet();
+
+      // Update user with wallet information
+      await query(
+        `UPDATE users
+         SET wallet_public_key = $1,
+             encrypted_private_key = $2,
+             wallet_generated = true,
+             wallet_created_at = NOW(),
+             updated_at = NOW()
+         WHERE address = $3`,
+        [wallet.publicKey, wallet.encryptedPrivateKey, address]
+      );
+
+      logger.info('Wallet created successfully', {
+        address,
+        walletAddress: wallet.address,
+      });
+
+      // Optionally fund the wallet on testnet
+      if (process.env.APTOS_NETWORK === 'testnet' && process.env.AUTO_FUND_WALLETS === 'true') {
+        try {
+          const fundTxHash = await WalletService.fundWallet(wallet.address);
+          if (fundTxHash) {
+            logger.info('Wallet funded', {
+              address: wallet.address,
+              txHash: fundTxHash,
+            });
+          }
+        } catch (fundError) {
+          // Log but don't fail the request if funding fails
+          logger.warn('Failed to fund wallet', {
+            address: wallet.address,
+            error: fundError,
+          });
+        }
+      }
+
+      return res.status(201).json({
+        success: true,
+        data: {
+          wallet: {
+            address: wallet.address,
+            publicKey: wallet.publicKey,
+            isAutoGenerated: true,
+            createdAt: new Date(),
+          },
+          message: 'Wallet created successfully',
+          existing: false,
+        },
+      });
+    } catch (walletError) {
+      logger.error('Wallet creation failed', {
+        address,
+        error: walletError,
+      });
+
+      return res.status(500).json({
+        success: false,
+        error: 'Wallet creation failed',
+        message: walletError instanceof Error ? walletError.message : 'Failed to create wallet',
+      });
+    }
+  } catch (error) {
+    logger.error('Create wallet error', { error });
+    return res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: 'Failed to create wallet',
+    });
+  }
+});
+
+/**
+ * GET /api/auth/wallet-info
+ * Get wallet information for authenticated user
+ */
+router.get('/wallet-info', verifyAuth as any, async (req: any, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: 'Unauthorized',
+        message: 'Not authenticated',
+      });
+    }
+
+    const address = req.user.address;
+
+    // Get user's wallet information
+    const users = await query(
+      `SELECT address, wallet_public_key, wallet_generated, wallet_created_at,
+              sso_provider, sso_id, email
+       FROM users
+       WHERE address = $1`,
+      [address]
+    );
+
+    if (users.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found',
+        message: 'User does not exist',
+      });
+    }
+
+    const user = users[0];
+
+    // Check if user has a wallet
+    if (!user.wallet_public_key || !user.wallet_generated) {
+      return res.status(404).json({
+        success: false,
+        error: 'Wallet not found',
+        message: 'User does not have a wallet',
+        hasWallet: false,
+      });
+    }
+
+    // Get wallet balance
+    let balance = '0';
+    let accountExists = false;
+    try {
+      accountExists = await WalletService.accountExists(user.address);
+      if (accountExists) {
+        const balanceValue = await WalletService.getBalance(user.address);
+        balance = balanceValue.toString();
+      }
+    } catch (balanceError) {
+      logger.warn('Failed to get wallet balance', {
+        address: user.address,
+        error: balanceError,
+      });
+    }
+
+    const network = process.env.APTOS_NETWORK || 'testnet';
+
+    return res.json({
+      success: true,
+      data: {
+        wallet: {
+          address: user.address,
+          publicKey: user.wallet_public_key,
+          isAutoGenerated: user.wallet_generated,
+          network,
+          balance,
+          accountExists,
+          createdAt: user.wallet_created_at,
+        },
+      },
+    });
+  } catch (error) {
+    logger.error('Failed to get wallet info', { error });
+    return res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: 'Failed to get wallet info',
     });
   }
 });

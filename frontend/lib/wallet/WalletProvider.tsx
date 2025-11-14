@@ -193,12 +193,25 @@ export function WalletProvider({
       // Get network info
       const networkInfo = await getNetworkInfo(provider);
 
-      // Set account and network
+      // Ensure we're on testnet for this application
+      if (networkInfo.name !== Network.TESTNET) {
+        try {
+          await provider.changeNetwork(Network.TESTNET);
+          const updatedNetworkInfo = await getNetworkInfo(provider);
+          setNetwork(updatedNetworkInfo);
+        } catch (networkError) {
+          console.warn('Failed to switch to testnet, proceeding with current network:', networkError);
+          setNetwork(networkInfo);
+        }
+      } else {
+        setNetwork(networkInfo);
+      }
+
+      // Set account
       setAccount({
         address: response.address,
         publicKey: response.publicKey,
       });
-      setNetwork(networkInfo);
       setConnected(true);
 
       // Save to localStorage for auto-reconnect
@@ -350,12 +363,25 @@ export function WalletProvider({
         const accountInfo = await provider.account();
         const networkInfo = await getNetworkInfo(provider);
 
+        // Ensure we're on testnet for this application
+        if (networkInfo.name !== Network.TESTNET) {
+          try {
+            await provider.changeNetwork(Network.TESTNET);
+            const updatedNetworkInfo = await getNetworkInfo(provider);
+            setNetwork(updatedNetworkInfo);
+          } catch (networkError) {
+            console.warn('Failed to switch to testnet on auto-connect, proceeding with current network:', networkError);
+            setNetwork(networkInfo);
+          }
+        } else {
+          setNetwork(networkInfo);
+        }
+
         setWallet(savedWallet);
         setAccount({
           address: accountInfo.address,
           publicKey: accountInfo.publicKey,
         });
-        setNetwork(networkInfo);
         setConnected(true);
       } catch (error) {
         console.error('Auto-connect failed:', error);
@@ -429,4 +455,11 @@ export function useWallet(): WalletContextState {
     throw new Error('useWallet must be used within WalletProvider');
   }
   return context;
+}
+
+/**
+ * Alias for useWallet (for compatibility)
+ */
+export function useAptosWallet(): WalletContextState {
+  return useWallet();
 }

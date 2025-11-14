@@ -2,19 +2,33 @@
  * Wallet Module Exports
  *
  * Central export file for all wallet-related functionality
+ * Now using official Aptos wallet adapter
  */
 
-// Provider and hook
-export { WalletProvider, useWallet } from './WalletProvider';
+// Provider and hook from official Aptos wallet adapter
+export {
+  AptosWalletAdapterProvider as WalletProvider,
+  useWallet
+} from '@aptos-labs/wallet-adapter-react';
 
-// Types
+// Re-export core types from official adapter
 export type {
-  WalletName,
-  Network,
-  WalletAdapter,
-  WalletAccount,
+  AccountInfo,
   NetworkInfo,
   WalletReadyState,
+  InputTransactionData,
+  AptosSignAndSubmitTransactionOutput,
+  AptosSignMessageInput,
+  AptosSignMessageOutput,
+} from '@aptos-labs/wallet-adapter-core';
+
+export { NetworkName } from '@aptos-labs/wallet-adapter-core';
+
+// Keep custom types for backward compatibility
+export type {
+  WalletName,
+  WalletAdapter,
+  WalletAccount,
   TransactionPayload,
   SignMessagePayload,
   SignMessageResponse,

@@ -1,6 +1,6 @@
 'use client';
 
-import { useWallet } from '@/lib/wallet/WalletProvider';
+import { useWalletCompat as useWallet } from '@/lib/wallet/compatibilityHooks';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -54,8 +54,8 @@ export function WalletButton() {
   const handleWalletSelect = async (walletName: WalletName) => {
     try {
       setError(null);
-      select(walletName);
-      await connect();
+      // With official adapter, connect() takes the wallet name directly
+      await connect(walletName);
       setWalletModalOpen(false);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to connect wallet';

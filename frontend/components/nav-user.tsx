@@ -8,7 +8,7 @@ import {
   IconShieldLock,
 } from "@tabler/icons-react"
 
-import { useWallet } from '@/lib/wallet'
+import { useWalletCompat as useWallet } from '@/lib/wallet/compatibilityHooks'
 import { useUser } from '@auth0/nextjs-auth0/client'
 import {
   Avatar,

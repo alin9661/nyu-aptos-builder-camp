@@ -104,6 +104,34 @@ export function getAccountExplorerUrl(address: string, network: Network): string
 }
 
 /**
+ * Get explorer URL for various resource types
+ * @param type Type of resource ('transaction' or 'account')
+ * @param identifier Transaction hash or account address
+ * @param network Network name (as string, e.g., 'testnet', 'mainnet')
+ */
+export function getExplorerUrl(
+  type: 'transaction' | 'account',
+  identifier: string,
+  network: string
+): string {
+  // Convert string network to Network enum
+  const networkMap: Record<string, Network> = {
+    mainnet: Network.MAINNET,
+    testnet: Network.TESTNET,
+    devnet: Network.DEVNET,
+    localnet: Network.LOCALNET,
+  };
+
+  const networkEnum = networkMap[network.toLowerCase()] || Network.TESTNET;
+
+  if (type === 'transaction') {
+    return getTxExplorerUrl(identifier, networkEnum);
+  } else {
+    return getAccountExplorerUrl(identifier, networkEnum);
+  }
+}
+
+/**
  * Convert Octas to APT
  * @param octas Amount in Octas (1 APT = 100,000,000 Octas)
  */
