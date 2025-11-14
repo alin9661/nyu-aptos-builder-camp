@@ -40,4 +40,4 @@ export {
 } from './useAuth';
 
 // Re-export wallet hook
-export { useWallet } from '@/lib/wallet/AptosWalletProvider';
+export { useWalletCompat as useWallet } from '@/lib/wallet/compatibilityHooks';

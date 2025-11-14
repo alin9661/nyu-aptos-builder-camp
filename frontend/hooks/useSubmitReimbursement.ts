@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { useAptosWallet } from '@/lib/wallet/WalletProvider';
+import { useWalletCompat as useWallet } from '@/lib/wallet/compatibilityHooks';
 import { aptosClient, MODULE_ADDRESS, COIN_TYPE } from '@/lib/api/aptos';
 import { submitReimbursement } from '@/lib/api/treasury';
 import { getExplorerUrl } from '@/lib/wallet/utils';
-import { Network } from '@/lib/types/wallet';
+import { Network, TransactionPayload } from '@/lib/types/wallet';
 
 type TransactionState =
   | 'idle'
@@ -35,7 +35,7 @@ export interface TransactionDetails {
 }
 
 export function useSubmitReimbursement() {
-  const { wallet, account, signAndSubmitTransaction, network, switchNetwork } = useAptosWallet();
+  const { wallet, account, signAndSubmitTransaction, network, switchNetwork } = useWallet();
   const [state, setState] = useState<TransactionState>('idle');
   const [transactionHash, setTransactionHash] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -57,10 +57,7 @@ export function useSubmitReimbursement() {
           throw new Error('Please connect your wallet first');
         }
 
-        // Ensure wallet is on testnet
-        if (network?.name !== Network.TESTNET) {
-          await switchNetwork(Network.TESTNET);
-        }
+        // Note: App is already configured for testnet, so no network switching needed
 
         // 1. SIGNING STATE
         setState('signing');
@@ -75,17 +72,16 @@ export function useSubmitReimbursement() {
 
         // Submit transaction to blockchain
         const response = await signAndSubmitTransaction({
-          type: 'entry_function_payload',
           function: `${MODULE_ADDRESS}::treasury::submit_reimbursement`,
-          type_arguments: [COIN_TYPE],
-          arguments: [
+          typeArguments: [COIN_TYPE],
+          functionArguments: [
             params.payee,
             amountInOctas.toString(),
             Array.from(descriptionBytes),
             Array.from(invoiceUriBytes),
             Array.from(invoiceHashBytes),
           ],
-        });
+        } as any);
 
         // 2. SUBMITTED STATE
         setState('submitted');
