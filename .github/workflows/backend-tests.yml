@@ -41,24 +41,28 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
-        working-directory: ./backend
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Run linter
         working-directory: ./backend
-        run: npm run lint
+        run: pnpm run lint
 
       - name: Run type checking
         working-directory: ./backend
-        run: npm run typecheck
+        run: pnpm run typecheck
 
       - name: Run unit tests
         working-directory: ./backend
@@ -69,7 +73,7 @@ jobs:
           TEST_DB_NAME: nyu_aptos_test
           TEST_DB_USER: postgres
           TEST_DB_PASSWORD: postgres
-        run: npm run test:unit
+        run: pnpm run test:unit
 
       - name: Run integration tests
         working-directory: ./backend
@@ -80,7 +84,7 @@ jobs:
           TEST_DB_NAME: nyu_aptos_test
           TEST_DB_USER: postgres
           TEST_DB_PASSWORD: postgres
-        run: npm run test:integration
+        run: pnpm run test:integration
 
       - name: Run all tests with coverage
         working-directory: ./backend
@@ -91,7 +95,7 @@ jobs:
           TEST_DB_NAME: nyu_aptos_test
           TEST_DB_USER: postgres
           TEST_DB_PASSWORD: postgres
-        run: npm run test:coverage
+        run: pnpm run test:coverage
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4
@@ -127,20 +131,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
-          cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
-        working-directory: ./backend
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Build project
         working-directory: ./backend
-        run: npm run build
+        run: pnpm run build
 
       - name: Check build artifacts
         working-directory: ./backend
