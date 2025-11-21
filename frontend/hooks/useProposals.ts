@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   getProposals,
   getProposalDetails,
@@ -34,10 +34,19 @@ export function useProposals(filters?: ProposalFilters) {
     error: null,
   });
 
+  // Stabilize filters object to prevent infinite loops
+  const stableFilters = useMemo(() => filters, [
+    filters?.page,
+    filters?.limit,
+    filters?.sort,
+    filters?.status,
+    filters?.category,
+  ]);
+
   const fetchProposals = useCallback(async () => {
     try {
       setState((prev) => ({ ...prev, loading: true, error: null }));
-      const response = await getProposals(filters);
+      const response = await getProposals(stableFilters);
 
       if (response.success && response.data) {
         setState({ data: response.data, loading: false, error: null });
@@ -58,7 +67,7 @@ export function useProposals(filters?: ProposalFilters) {
             : 'An unexpected error occurred',
       });
     }
-  }, [filters]);
+  }, [stableFilters]);
 
   useEffect(() => {
     fetchProposals();
@@ -153,14 +162,18 @@ export function useActiveProposals(autoRefresh = false, refreshInterval = 30000)
     }
   }, []);
 
+  // Initial fetch
   useEffect(() => {
     fetchActive();
+  }, [fetchActive]);
 
+  // Auto-refresh setup (separate effect to avoid triggering on param changes)
+  useEffect(() => {
     if (autoRefresh) {
       const interval = setInterval(fetchActive, refreshInterval);
       return () => clearInterval(interval);
     }
-  }, [fetchActive, autoRefresh, refreshInterval]);
+  }, [autoRefresh, refreshInterval, fetchActive]);
 
   return { ...state, refetch: fetchActive };
 }
@@ -201,14 +214,18 @@ export function useProposalStats(autoRefresh = false, refreshInterval = 60000) {
     }
   }, []);
 
+  // Initial fetch
   useEffect(() => {
     fetchStats();
+  }, [fetchStats]);
 
+  // Auto-refresh setup (separate effect to avoid triggering on param changes)
+  useEffect(() => {
     if (autoRefresh) {
       const interval = setInterval(fetchStats, refreshInterval);
       return () => clearInterval(interval);
     }
-  }, [fetchStats, autoRefresh, refreshInterval]);
+  }, [autoRefresh, refreshInterval, fetchStats]);
 
   return { ...state, refetch: fetchStats };
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   getElections,
   getElectionDetails,
@@ -36,10 +36,19 @@ export function useElections(filters?: ElectionFilters) {
     error: null,
   });
 
+  // Stabilize filters object to prevent infinite loops
+  const stableFilters = useMemo(() => filters, [
+    filters?.page,
+    filters?.limit,
+    filters?.sort,
+    filters?.status,
+    filters?.role,
+  ]);
+
   const fetchElections = useCallback(async () => {
     try {
       setState((prev) => ({ ...prev, loading: true, error: null }));
-      const response = await getElections(filters);
+      const response = await getElections(stableFilters);
 
       if (response.success && response.data) {
         setState({ data: response.data, loading: false, error: null });
@@ -60,7 +69,7 @@ export function useElections(filters?: ElectionFilters) {
             : 'An unexpected error occurred',
       });
     }
-  }, [filters]);
+  }, [stableFilters]);
 
   useEffect(() => {
     fetchElections();
@@ -241,14 +250,18 @@ export function useGovernanceStats(autoRefresh = false, refreshInterval = 60000)
     }
   }, []);
 
+  // Initial fetch
   useEffect(() => {
     fetchStats();
+  }, [fetchStats]);
 
+  // Auto-refresh setup (separate effect to avoid triggering on param changes)
+  useEffect(() => {
     if (autoRefresh) {
       const interval = setInterval(fetchStats, refreshInterval);
       return () => clearInterval(interval);
     }
-  }, [fetchStats, autoRefresh, refreshInterval]);
+  }, [autoRefresh, refreshInterval, fetchStats]);
 
   return { ...state, refetch: fetchStats };
 }
