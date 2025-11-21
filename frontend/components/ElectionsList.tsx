@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useElections } from '@/hooks/useGovernance';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -30,13 +30,17 @@ export function ElectionsList({
   filterStatus,
 }: ElectionsListProps) {
   const [page, setPage] = useState(1);
-  const { data, loading, error, refetch } = useElections({
+
+  // Stabilize filters object to prevent infinite re-renders
+  const electionFilters = useMemo(() => ({
     page,
     limit: pageSize,
-    sort: 'desc',
+    sort: 'desc' as const,
     role: filterRole,
     status: filterStatus,
-  });
+  }), [page, pageSize, filterRole, filterStatus]);
+
+  const { data, loading, error, refetch } = useElections(electionFilters);
 
   if (loading && !data) {
     return (
