@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { AppSidebar } from '@/components/app-sidebar';
 import { SiteHeader } from '@/components/site-header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
@@ -34,13 +34,16 @@ export default function GovernancePage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [votingPower, setVotingPower] = useState(2); // Default: e-board member weight
 
-  // Fetch governance data
-  const { data: statsData, loading: statsLoading } = useGovernanceStats(true, 60000);
-  const { data: electionsData, loading: electionsLoading, refetch: refetchElections } = useElections({
+  // Stabilize filter objects to prevent infinite re-renders
+  const electionFilters = useMemo(() => ({
     page: 1,
     limit: 50,
-    sort: 'desc',
-  });
+    sort: 'desc' as const,
+  }), []);
+
+  // Fetch governance data
+  const { data: statsData, loading: statsLoading } = useGovernanceStats(true, 60000);
+  const { data: electionsData, loading: electionsLoading, refetch: refetchElections } = useElections(electionFilters);
   const { data: proposalsData, loading: proposalsLoading, refetch: refetchProposals } = useActiveProposals(true, 30000);
 
   // TODO: Replace with actual wallet integration
