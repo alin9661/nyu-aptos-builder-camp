@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to NYU Nexus</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #F3F4F6;">
+    <table role="presentation" style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td align="center" style="padding: 40px 20px;">
+                <table role="presentation" style="max-width: 600px; width: 100%; background-color: #FFFFFF; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <!-- Header -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); padding: 40px 40px 30px; border-radius: 8px 8px 0 0; text-align: center;">
+                            <h1 style="color: #FFFFFF; margin: 0; font-size: 28px; font-weight: 700;">
+                                Welcome to NYU Nexus!
+                            </h1>
+                            <p style="color: #E0E7FF; margin: 10px 0 0; font-size: 16px;">
+                                Your Aptos Wallet is Ready
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Body -->
+                    <tr>
+                        <td style="padding: 40px;">
+                            <p style="color: #1F2937; font-size: 16px; line-height: 24px; margin: 0 0 20px;">
+                                Hi {{displayName}},
+                            </p>
+
+                            <p style="color: #1F2937; font-size: 16px; line-height: 24px; margin: 0 0 20px;">
+                                Congratulations! Your Aptos blockchain wallet has been automatically created and secured. You can now participate in NYU Nexus governance, submit reimbursement requests, and more.
+                            </p>
+
+                            <!-- Wallet Address Box -->
+                            <div style="background-color: #F9FAFB; border: 2px solid #E5E7EB; border-radius: 8px; padding: 24px; margin: 30px 0;">
+                                <p style="color: #6B7280; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 10px;">
+                                    Your Wallet Address
+                                </p>
+                                <p style="color: #1F2937; font-size: 14px; font-family: 'Courier New', monospace; word-break: break-all; margin: 0 0 15px; background-color: #FFFFFF; padding: 12px; border-radius: 4px; border: 1px solid #E5E7EB;">
+                                    {{walletAddress}}
+                                </p>
+                                <p style="color: #6B7280; font-size: 13px; margin: 10px 0 0;">
+                                    <strong>Network:</strong> {{network}}
+                                </p>
+                                <a href="{{explorerUrl}}" style="display: inline-block; margin-top: 15px; color: #4F46E5; text-decoration: none; font-size: 14px; font-weight: 600;">
+                                    View on Explorer →
+                                </a>
+                            </div>
+
+                            <!-- Security Notice -->
+                            <div style="background-color: #FEF3C7; border-left: 4px solid #F59E0B; padding: 16px; margin: 30px 0; border-radius: 4px;">
+                                <p style="color: #92400E; font-size: 14px; font-weight: 600; margin: 0 0 8px;">
+                                    🔒 Your Wallet is Secure
+                                </p>
+                                <p style="color: #78350F; font-size: 14px; line-height: 20px; margin: 0;">
+                                    Your private key is encrypted using AES-256-GCM encryption and stored securely on our servers. We manage your wallet for you, so you don't need to worry about losing your keys.
+                                </p>
+                            </div>
+
+                            <!-- What is Aptos -->
+                            <h2 style="color: #1F2937; font-size: 20px; font-weight: 700; margin: 30px 0 15px;">
+                                What is Aptos Blockchain?
+                            </h2>
+                            <p style="color: #4B5563; font-size: 15px; line-height: 22px; margin: 0 0 15px;">
+                                Aptos is a next-generation blockchain platform designed for safety, speed, and reliability. Your wallet allows you to:
+                            </p>
+                            <ul style="color: #4B5563; font-size: 15px; line-height: 22px; margin: 0 0 20px; padding-left: 25px;">
+                                <li style="margin-bottom: 8px;">Vote on governance proposals</li>
+                                <li style="margin-bottom: 8px;">Submit and approve reimbursement requests</li>
+                                <li style="margin-bottom: 8px;">Participate in treasury management</li>
+                                <li style="margin-bottom: 8px;">View transparent transaction history</li>
+                            </ul>
+
+                            <!-- Next Steps -->
+                            <h2 style="color: #1F2937; font-size: 20px; font-weight: 700; margin: 30px 0 15px;">
+                                Next Steps
+                            </h2>
+                            <ol style="color: #4B5563; font-size: 15px; line-height: 22px; margin: 0 0 20px; padding-left: 25px;">
+                                <li style="margin-bottom: 8px;"><strong>Check your wallet:</strong> Log in to view your wallet dashboard</li>
+                                <li style="margin-bottom: 8px;"><strong>Learn the basics:</strong> Read our getting started guide</li>
+                                <li style="margin-bottom: 8px;"><strong>Explore features:</strong> Submit your first reimbursement or vote on a proposal</li>
+                            </ol>
+
+                            <!-- CTA Button -->
+                            <div style="text-align: center; margin: 35px 0;">
+                                <a href="{{explorerUrl}}" style="display: inline-block; background-color: #4F46E5; color: #FFFFFF; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                                    Access Your Wallet
+                                </a>
+                            </div>
+
+                            <!-- Support -->
+                            <div style="background-color: #F9FAFB; padding: 20px; border-radius: 6px; margin: 30px 0 0;">
+                                <p style="color: #6B7280; font-size: 14px; line-height: 20px; margin: 0;">
+                                    <strong>Need Help?</strong><br>
+                                    If you have any questions or need assistance, please visit our <a href="{{supportUrl}}" style="color: #4F46E5; text-decoration: none;">support center</a> or contact us directly.
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #F9FAFB; padding: 30px 40px; border-radius: 0 0 8px 8px; border-top: 1px solid #E5E7EB;">
+                            <p style="color: #6B7280; font-size: 13px; line-height: 18px; margin: 0 0 10px; text-align: center;">
+                                <strong>NYU Nexus</strong> - Decentralized Governance Platform
+                            </p>
+                            <p style="color: #9CA3AF; font-size: 12px; line-height: 18px; margin: 0; text-align: center;">
+                                This wallet was automatically created for you as part of NYU's blockchain initiative.
+                            </p>
+                            <p style="color: #9CA3AF; font-size: 12px; line-height: 18px; margin: 15px 0 0; text-align: center;">
+                                <a href="{{unsubscribeUrl}}" style="color: #6B7280; text-decoration: underline;">Unsubscribe</a> from these emails
+                            </p>
+                            <p style="color: #9CA3AF; font-size: 11px; margin: 15px 0 0; text-align: center;">
+                                © {{currentYear}} New York University. All rights reserved.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

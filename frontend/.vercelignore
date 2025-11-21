@@ -1,0 +1,42 @@
+# Exclude backend directory from Vercel deployment
+backend/
+
+# Node modules (handled by package managers)
+**/node_modules/
+
+# Build artifacts
+**/.next/
+**/dist/
+**/build/
+
+# Environment files (use Vercel dashboard for env vars)
+**/.env
+**/.env.local
+**/.env.*.local
+
+# Database files
+**/*.db
+**/*.sqlite
+
+# Logs
+**/logs/
+**/*.log
+
+# IDE files
+**/.vscode/
+**/.idea/
+**/*.swp
+**/*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test files
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+**/tests/
+**/test/
+**/__tests__/

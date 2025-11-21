@@ -5,14 +5,7 @@ import { query } from '../config/database';
 import { logger } from '../utils/logger';
 import { validateQuery, paginationSchema } from '../utils/validators';
 import { verifyAuth, requireLeadership, AuthenticatedRequest } from '../middleware/auth';
-// Temporarily disabled IPFS imports due to module issues
-// import {
-//   uploadInvoice,
-//   getInvoiceMetadata,
-//   getFromIPFS,
-//   validateInvoiceFile,
-//   getInvoiceDownloadURL,
-// } from '../services/ipfs';
+import { uploadService } from '../services/uploadService';
 
 const router = Router();
 

@@ -1,0 +1,46 @@
+# Backend (deployed separately to Railway/Render)
+backend/
+
+# Smart contracts (not needed for frontend deployment)
+contracts/
+
+# Documentation
+docs/
+
+# Scripts and tools
+scripts/
+
+# Environment files (use Vercel dashboard for env vars)
+.env*
+!.env.example
+
+# Development files
+*.md
+!frontend/**/*.md
+
+# Dependencies (will be installed during build)
+node_modules/
+**/node_modules/
+
+# Build artifacts
+.next/
+dist/
+build/
+*.log
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Testing
+**/__tests__/
+**/*.test.*
+**/*.spec.*
+coverage/

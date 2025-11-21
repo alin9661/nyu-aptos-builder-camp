@@ -24,19 +24,18 @@ This platform provides an intuitive interface for students to:
 - **Proposal System** - Create, vote on, and track governance proposals
 - **Campus Elections** - Conduct secure on-chain elections
 - **Role-Based Access** - Advisor, President, Vice President, and Member roles
-- **Real-Time Updates** - WebSocket-powered live proposal status
+- **Real-Time Updates** - Server-Sent Events for live updates
 
 ### Treasury Management
 - **Reimbursement Submissions** - Submit and track expense reimbursements
 - **Multi-Signature Approvals** - Secure approval workflow
 - **Balance Tracking** - Real-time treasury balance monitoring
 - **Transaction History** - Complete audit trail of all transactions
-- **Receipt Management** - IPFS-based document storage
+- **Receipt Management** - Vercel Blob-based document storage
 
 ### Developer Experience
 - **Comprehensive API** - RESTful endpoints with full documentation
 - **TypeScript** - End-to-end type safety
-- **Docker Support** - Containerized development environment
 - **Automated Testing** - CI/CD with GitHub Actions
 - **Hot Reload** - Fast development feedback loop
 
@@ -52,9 +51,9 @@ This platform provides an intuitive interface for students to:
 ### Backend
 - **Express** - Node.js web framework
 - **TypeScript** - Type-safe API development
-- **PostgreSQL** - Relational database
+- **PostgreSQL** - Relational database (Vercel Postgres or Supabase)
 - **Aptos SDK** - Blockchain integration
-- **Socket.io** - Real-time WebSocket communication
+- **Server-Sent Events** - Real-time updates
 
 ### Blockchain
 - **Aptos** - Layer 1 blockchain platform
@@ -62,39 +61,48 @@ This platform provides an intuitive interface for students to:
 - **Testnet** - Development and testing network
 
 ### Infrastructure
-- **Docker** - Containerization
+- **Vercel** - Frontend hosting with serverless functions
+- **Railway/Render** - Backend API hosting
+- **Vercel Postgres** - Managed PostgreSQL database
+- **Vercel Blob** - File storage
 - **GitHub Actions** - CI/CD pipeline
-- **Kubernetes** - Production deployment (optional)
 
 ## Quick Start
 
-### Prerequisites
+**Prerequisites:**
 - Node.js 18 or higher
-- pnpm
-- PostgreSQL 15+ or Docker Desktop
+- pnpm 8 or higher
+- PostgreSQL 15+
 - Git
 
-### Installation
+**Installation:**
 
 ```bash
 # Clone the repository
 git clone https://github.com/alin9661/nyu-aptos-builder-camp.git
 cd nyu-aptos-builder-camp
 
-# Run automated setup
-chmod +x scripts/setup.sh
-./scripts/setup.sh
+# Install dependencies
+pnpm install
 
-# Start development servers
-chmod +x scripts/start-dev.sh
-./scripts/start-dev.sh
+# Set up environment variables
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env.local
+# Edit .env files with your configuration
+
+# Set up the database
+createdb nyu_aptos_dev
+psql -d nyu_aptos_dev -f backend/database/schema.sql
+
+# Start development servers (frontend and backend)
+pnpm dev
 ```
 
-The app will be available at:
+The application will be available at:
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:3001
 
-For detailed setup instructions, see [SETUP.md](SETUP.md).
+For detailed setup instructions, see [docs/setup/SETUP.md](docs/setup/SETUP.md).
 
 ## Project Structure
 
@@ -123,26 +131,24 @@ nyu-aptos-builder-camp/
 
 ## Documentation
 
-- **[Setup Guide](SETUP.md)** - Complete installation instructions
-- **[API Reference](docs/API_REFERENCE.md)** - REST API documentation
-- **[Authentication Guide](docs/AUTHENTICATION.md)** - Auth flow details
-- **[Wallet Integration](docs/WALLET_INTEGRATION.md)** - Wallet setup guide
+- **[Setup Guide](docs/setup/SETUP.md)** - Complete installation instructions
+- **[Deployment Guide](docs/setup/VERCEL_DEPLOYMENT.md)** - Vercel and Railway deployment
+- **[API Reference](docs/api/API_REFERENCE.md)** - REST API documentation
+- **[Authentication Guide](docs/auth/AUTHENTICATION.md)** - Auth flow details
+- **[Wallet Integration](docs/guides/WALLET_INTEGRATION.md)** - Wallet setup guide
 - **[Smart Contracts](contracts/README.md)** - Move contract documentation
-- **[Deployment](docs/DEPLOYMENT.md)** - Production deployment guide
 
 ## Development
 
 ### Running the Application
 
 ```bash
-# Start PostgreSQL (Docker)
-cd backend && docker-compose up -d postgres
+# Start both frontend and backend
+pnpm dev
 
-# Start Backend
-cd backend && npm run dev
-
-# Start Frontend
-cd frontend && pnpm dev
+# Or run separately:
+pnpm dev:frontend  # Start frontend only
+pnpm dev:backend   # Start backend only
 ```
 
 ### Running Tests
@@ -210,7 +216,37 @@ aptos move publish
 - `POST /api/proposals/:id/vote` - Vote on proposal
 - `GET /api/proposals/:id` - Get proposal details
 
-For complete API documentation, see [docs/API_REFERENCE.md](docs/API_REFERENCE.md).
+For complete API documentation, see [docs/api/API_REFERENCE.md](docs/api/API_REFERENCE.md).
+
+## Deployment
+
+### Production Deployment
+
+This application is designed to deploy on modern cloud platforms:
+
+**Frontend (Vercel):**
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Deploy to Vercel
+cd frontend && vercel --prod
+```
+
+**Backend (Railway or Render):**
+- Railway: Connect GitHub repo and deploy automatically
+- Render: Connect GitHub repo and deploy from backend/ directory
+
+**Database:**
+- Option 1: Vercel Postgres (Neon-powered, integrated with Vercel)
+- Option 2: Supabase (More features, separate service)
+
+**Environment Variables:**
+- Configure all production environment variables in deployment platform dashboards
+- Update Auth0 callback URLs with production URLs
+- Set CORS_ORIGIN to your Vercel frontend URL
+
+For complete deployment instructions, see [docs/setup/VERCEL_DEPLOYMENT.md](docs/setup/VERCEL_DEPLOYMENT.md).
 
 ## Contributing
 
