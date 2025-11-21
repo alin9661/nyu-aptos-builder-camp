@@ -1,6 +1,8 @@
 import { ApiResponse } from '../types/api';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
+// Updated to use Next.js API routes (/api) instead of external backend
+// All backend functionality is now serverless functions in frontend/app/api/
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '/api';
 
 export class ApiError extends Error {
   constructor(

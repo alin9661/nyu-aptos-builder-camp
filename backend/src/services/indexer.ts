@@ -1,7 +1,7 @@
 import { aptos, EVENT_TYPES } from '../config/aptos';
 import { query, transaction } from '../config/database';
 import { logger } from '../utils/logger';
-import { getWebSocketService } from './websocket';
+import { getEventService } from './events';
 
 // Indexer state
 interface IndexerState {
@@ -188,10 +188,10 @@ class TreasuryIndexer extends EventIndexer {
           );
         });
 
-        // Emit WebSocket event
+        // Emit SSE event
         try {
-          const wsService = getWebSocketService();
-          wsService.emitTreasuryDeposit({
+          const eventService = getEventService();
+          eventService.emitTreasuryDeposit({
             source: Buffer.from(data.source).toString('utf-8'),
             amount: data.amount,
             totalBalance: data.total_balance,
@@ -270,8 +270,8 @@ class TreasuryIndexer extends EventIndexer {
 
         // Emit WebSocket event
         try {
-          const wsService = getWebSocketService();
-          wsService.emitReimbursementNew({
+          const eventService = getEventService();
+          eventService.emitReimbursementNew({
             id: data.id,
             payer: data.payer,
             payee: data.payee,
@@ -358,9 +358,9 @@ class TreasuryIndexer extends EventIndexer {
 
           // Emit WebSocket event
           try {
-            const wsService = getWebSocketService();
+            const eventService = getEventService();
             const approvalStatus = statusResult.rows[0];
-            wsService.emitReimbursementApproved({
+            eventService.emitReimbursementApproved({
               id: data.id,
               approver: data.approver,
               role,
@@ -438,8 +438,8 @@ class TreasuryIndexer extends EventIndexer {
 
         // Emit WebSocket event
         try {
-          const wsService = getWebSocketService();
-          wsService.emitReimbursementPaid({
+          const eventService = getEventService();
+          eventService.emitReimbursementPaid({
             id: data.id,
             payee: data.payee,
             amount: data.amount,
@@ -598,8 +598,8 @@ class GovernanceIndexer extends EventIndexer {
 
         // Emit WebSocket event
         try {
-          const wsService = getWebSocketService();
-          wsService.emitElectionVote({
+          const eventService = getEventService();
+          eventService.emitElectionVote({
             electionId: data.election_id,
             roleName: Buffer.from(data.role_name).toString('utf-8'),
             voter: data.voter,
@@ -663,8 +663,8 @@ class GovernanceIndexer extends EventIndexer {
 
           // Emit WebSocket event
           try {
-            const wsService = getWebSocketService();
-            wsService.emitElectionFinalized({
+            const eventService = getEventService();
+            eventService.emitElectionFinalized({
               electionId: data.election_id,
               roleName: Buffer.from(data.role_name).toString('utf-8'),
               winner: data.winner?.vec?.[0] || null,
@@ -764,8 +764,8 @@ class ProposalsIndexer extends EventIndexer {
 
         // Emit WebSocket event
         try {
-          const wsService = getWebSocketService();
-          wsService.emitProposalNew({
+          const eventService = getEventService();
+          eventService.emitProposalNew({
             proposalId: data.proposal_id,
             creator: data.creator,
             title: Buffer.from(data.title).toString('utf-8'),
@@ -839,9 +839,9 @@ class ProposalsIndexer extends EventIndexer {
 
           // Emit WebSocket event
           try {
-            const wsService = getWebSocketService();
+            const eventService = getEventService();
             const voteCounts = voteCountResult.rows[0];
-            wsService.emitProposalVote({
+            eventService.emitProposalVote({
               proposalId: data.proposal_id,
               voter: data.voter,
               vote: data.vote,
@@ -896,8 +896,8 @@ class ProposalsIndexer extends EventIndexer {
 
         // Emit WebSocket event
         try {
-          const wsService = getWebSocketService();
-          wsService.emitProposalFinalized({
+          const eventService = getEventService();
+          eventService.emitProposalFinalized({
             proposalId: data.proposal_id,
             status: data.status,
             yayVotes: data.yay_votes,
