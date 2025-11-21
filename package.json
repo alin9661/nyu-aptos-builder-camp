@@ -1,0 +1,29 @@
+{
+  "name": "nyu-aptos-nexus",
+  "version": "1.0.0",
+  "private": true,
+  "description": "NYU Aptos Builder Camp - Governance and Treasury Platform",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev:frontend": "cd frontend && pnpm dev",
+    "dev:backend": "cd backend && pnpm dev",
+    "dev": "concurrently \"pnpm dev:frontend\" \"pnpm dev:backend\"",
+    "build": "cd frontend && pnpm build",
+    "build:backend": "cd backend && pnpm build",
+    "build:all": "pnpm build:backend && pnpm build",
+    "start": "cd frontend && pnpm start",
+    "lint": "cd frontend && pnpm lint && cd ../backend && pnpm lint",
+    "typecheck": "cd frontend && tsc --noEmit && cd ../backend && pnpm typecheck"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@9.15.0"
+}

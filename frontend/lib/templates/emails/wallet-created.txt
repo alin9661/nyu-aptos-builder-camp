@@ -1,0 +1,42 @@
+WELCOME TO NYU NEXUS!
+Your Aptos Wallet is Ready
+
+Hi {{displayName}},
+
+Congratulations! Your Aptos blockchain wallet has been automatically created and secured. You can now participate in NYU Nexus governance, submit reimbursement requests, and more.
+
+YOUR WALLET ADDRESS
+{{walletAddress}}
+
+Network: {{network}}
+View on Explorer: {{explorerUrl}}
+
+SECURITY NOTICE
+Your private key is encrypted using AES-256-GCM encryption and stored securely on our servers. We manage your wallet for you, so you don't need to worry about losing your keys.
+
+WHAT IS APTOS BLOCKCHAIN?
+Aptos is a next-generation blockchain platform designed for safety, speed, and reliability. Your wallet allows you to:
+- Vote on governance proposals
+- Submit and approve reimbursement requests
+- Participate in treasury management
+- View transparent transaction history
+
+NEXT STEPS
+1. Check your wallet: Log in to view your wallet dashboard
+2. Learn the basics: Read our getting started guide
+3. Explore features: Submit your first reimbursement or vote on a proposal
+
+Access your wallet: {{explorerUrl}}
+
+NEED HELP?
+If you have any questions or need assistance, please visit our support center:
+{{supportUrl}}
+
+---
+NYU Nexus - Decentralized Governance Platform
+
+This wallet was automatically created for you as part of NYU's blockchain initiative.
+
+Unsubscribe from these emails: {{unsubscribeUrl}}
+
+© {{currentYear}} New York University. All rights reserved.

@@ -13,6 +13,9 @@ export const metadata: Metadata = {
   title: 'Nexus - NYU Aptos Governance Platform',
   description: 'Decentralized governance and treasury management platform built on Aptos',
   generator: 'v0.app',
+  icons: {
+    icon: '/placeholder-logo.png',
+  },
 }
 
 export default function RootLayout({

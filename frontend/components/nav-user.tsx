@@ -48,7 +48,7 @@ export function NavUser({
   // Priority: Auth0 user > Wallet > Default user
   const displayName = auth0User?.name ||
     (connected && account?.address
-      ? `${account.address.slice(0, 6)}...${account.address.slice(-4)}`
+      ? `${account.address.toString().slice(0, 6)}...${account.address.toString().slice(-4)}`
       : user.name)
 
   const displayEmail = auth0User?.email ||
@@ -59,7 +59,7 @@ export function NavUser({
     : (connected ? 'W' : 'U')
 
   const handleLogout = () => {
-    window.location.href = '/auth/logout';
+    window.location.href = '/api/auth/logout?returnTo=/auth';
   };
 
   return (

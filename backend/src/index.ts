@@ -1,12 +1,11 @@
 import express, { Express, Request, Response, NextFunction } from 'express';
-import http from 'http';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
 import { logger } from './utils/logger';
 import { testConnection, closePool } from './config/database';
 import { getNetworkInfo } from './config/aptos';
-import { initializeWebSocketService, getWebSocketService } from './services/websocket';
+import { initializeEventService, getEventService } from './services/events';
 
 // Import routes
 import authRoutes from './routes/auth';
@@ -14,6 +13,7 @@ import treasuryRoutes from './routes/treasury';
 import governanceRoutes from './routes/governance';
 import proposalsRoutes from './routes/proposals';
 import webhookRoutes from './routes/webhook';
+import eventsRoutes from './routes/events';
 
 // Load environment variables
 dotenv.config();
@@ -21,9 +21,6 @@ dotenv.config();
 const app: Express = express();
 const PORT = process.env.PORT || 3001;
 const NODE_ENV = process.env.NODE_ENV || 'development';
-
-// Create HTTP server for Socket.IO
-const httpServer = http.createServer(app);
 
 // Middleware
 app.use(cors({
@@ -68,13 +65,13 @@ app.get('/health', async (_req: Request, res: Response) => {
     const dbHealthy = await testConnection();
     const networkInfo = getNetworkInfo();
 
-    // Get WebSocket metrics if initialized
-    let wsMetrics = null;
+    // Get Event service metrics if initialized
+    let eventMetrics = null;
     try {
-      const wsService = getWebSocketService();
-      wsMetrics = wsService.getMetrics();
+      const eventService = getEventService();
+      eventMetrics = eventService.getMetrics();
     } catch {
-      // WebSocket service not yet initialized
+      // Event service not yet initialized
     }
 
     return res.json({
@@ -83,11 +80,11 @@ app.get('/health', async (_req: Request, res: Response) => {
       environment: NODE_ENV,
       database: dbHealthy ? 'connected' : 'disconnected',
       network: networkInfo,
-      websocket: wsMetrics ? {
+      events: eventMetrics ? {
         connected: true,
-        activeConnections: wsMetrics.activeConnections,
-        totalConnections: wsMetrics.totalConnections,
-        totalEvents: wsMetrics.totalEvents,
+        activeConnections: eventMetrics.activeConnections,
+        totalConnections: eventMetrics.totalConnections,
+        totalEvents: eventMetrics.totalEvents,
       } : {
         connected: false,
       },
@@ -101,41 +98,13 @@ app.get('/health', async (_req: Request, res: Response) => {
   }
 });
 
-// WebSocket metrics endpoint
-app.get('/api/websocket/metrics', (_req: Request, res: Response) => {
-  try {
-    const wsService = getWebSocketService();
-    const metrics = wsService.getMetrics();
-
-    return res.json({
-      success: true,
-      metrics: {
-        activeConnections: metrics.activeConnections,
-        totalConnections: metrics.totalConnections,
-        totalEvents: metrics.totalEvents,
-        eventsByChannel: metrics.eventsByChannel,
-        channelSubscribers: Object.fromEntries(
-          Object.entries(metrics.connectionsByChannel).map(([k, v]) => [
-            k,
-            v.size,
-          ])
-        ),
-      },
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'WebSocket not initialized',
-    });
-  }
-});
-
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/auth/webhook', webhookRoutes);
 app.use('/api/treasury', treasuryRoutes);
 app.use('/api/governance', governanceRoutes);
 app.use('/api/proposals', proposalsRoutes);
+app.use('/api/events', eventsRoutes);
 
 // Root endpoint
 app.get('/', (_req: Request, res: Response) => {
@@ -145,7 +114,12 @@ app.get('/', (_req: Request, res: Response) => {
     description: 'Backend API for governance and treasury management platform',
     endpoints: {
       health: '/health',
-      websocketMetrics: '/api/websocket/metrics',
+      events: {
+        stream: 'GET /api/events/stream?channels=treasury:deposit,proposals:new',
+        poll: 'GET /api/events/poll?channels=treasury:deposit&since=123456',
+        metrics: 'GET /api/events/metrics',
+        channels: 'GET /api/events/channels',
+      },
       auth: {
         nonce: 'POST /api/auth/nonce',
         login: 'POST /api/auth/login',
@@ -195,21 +169,6 @@ app.get('/', (_req: Request, res: Response) => {
         stats: 'GET /api/proposals/stats/overview',
       },
     },
-    websocket: {
-      url: `ws://localhost:${PORT}`,
-      channels: [
-        'treasury:deposit',
-        'treasury:balance',
-        'reimbursements:new',
-        'reimbursements:approved',
-        'reimbursements:paid',
-        'elections:vote',
-        'elections:finalized',
-        'proposals:new',
-        'proposals:vote',
-        'proposals:finalized',
-      ],
-    },
   });
 });
 
@@ -258,6 +217,7 @@ app.use((req: Request, res: Response) => {
       treasury: '/api/treasury/*',
       governance: '/api/governance/*',
       proposals: '/api/proposals/*',
+      events: '/api/events/*',
       health: '/health',
       docs: '/ (API documentation)',
     },
@@ -289,17 +249,17 @@ const startServer = async () => {
       process.exit(1);
     }
 
-    // Initialize WebSocket service
-    const wsService = initializeWebSocketService(httpServer);
-    logger.info('WebSocket service initialized');
+    // Initialize Event service (SSE)
+    const eventService = initializeEventService();
+    logger.info('Event service (SSE) initialized');
 
-    // Start HTTP server with Socket.IO
-    httpServer.listen(PORT, () => {
+    // Start HTTP server
+    app.listen(PORT, () => {
       logger.info(`Server started`, {
         port: PORT,
         environment: NODE_ENV,
         network: getNetworkInfo().network,
-        websocket: 'enabled',
+        events: 'SSE enabled',
       });
     });
 
@@ -307,21 +267,19 @@ const startServer = async () => {
     const shutdown = async () => {
       logger.info('Shutting down server...');
 
-      // Shutdown WebSocket service first
-      await wsService.shutdown();
-
-      // Close HTTP server
-      httpServer.close(async () => {
-        await closePool();
-        logger.info('Server shut down complete');
-        process.exit(0);
-      });
-
       // Force shutdown after 10 seconds
       setTimeout(() => {
         logger.error('Forced shutdown after timeout');
         process.exit(1);
       }, 10000);
+
+      // Shutdown Event service first
+      await eventService.shutdown();
+
+      // Close database pool
+      await closePool();
+      logger.info('Server shut down complete');
+      process.exit(0);
     };
 
     process.on('SIGTERM', shutdown);
@@ -336,4 +294,3 @@ const startServer = async () => {
 startServer();
 
 export default app;
-export { httpServer };
