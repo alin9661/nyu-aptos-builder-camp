@@ -1,41 +1,50 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { WalletButton } from '@/components/WalletButton';
-import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
+
+const NAV_ITEMS = [
+  { label: 'Features', href: '/features' },
+  { label: 'Governance', href: '/governance' },
+  { label: 'Treasury', href: '/treasury' },
+];
 
 export default function NavBar() {
+  const pathname = usePathname();
+
   return (
-    <motion.nav 
-      initial={{ y: -100, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.8, ease: "easeOut" }}
-      className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 md:px-12 backdrop-blur-md bg-black/10 border-b border-white/10"
-    >
-      <div className="flex items-center gap-2">
-        <Link href="/" className="flex items-center gap-2 group">
-          <div className="relative w-8 h-8 overflow-hidden rounded-full bg-gradient-to-tr from-purple-600 to-blue-500">
-            <div className="absolute inset-0 bg-white/20 group-hover:bg-white/30 transition-colors" />
+    <nav className="flex h-20 shrink-0 items-center gap-2 border-b bg-background px-6">
+      <div className="flex items-center gap-2 mr-8">
+        <Link href="/" className="flex items-center gap-2 font-bold text-xl">
+          <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground">
+            N
           </div>
-          <span className="text-xl font-bold tracking-tight text-white">Nexus</span>
+          <span>Nexus</span>
         </Link>
       </div>
 
-      <div className="hidden md:flex items-center gap-8">
-        <Link href="#features" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">
-          Features
-        </Link>
-        <Link href="#governance" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">
-          Governance
-        </Link>
-        <Link href="#treasury" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">
-          Treasury
-        </Link>
-      </div>
+      <nav className="hidden md:flex items-center gap-1 bg-muted/50 p-1 rounded-full">
+        {NAV_ITEMS.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={cn(
+              "px-6 py-2 rounded-full text-sm font-medium transition-all duration-200",
+              pathname === item.href
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {item.label}
+          </Link>
+        ))}
+      </nav>
 
-      <div className="flex items-center gap-4">
+      <div className="ml-auto flex items-center gap-4">
         <WalletButton />
       </div>
-    </motion.nav>
+    </nav>
   );
 }

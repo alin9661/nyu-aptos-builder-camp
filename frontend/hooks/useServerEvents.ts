@@ -3,7 +3,7 @@
  * Replaces the previous WebSocket hook
  */
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 
 export type EventChannel =
   | 'treasury:deposit'
@@ -75,13 +75,36 @@ export function useServerEvents(
   const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
   const reconnectAttemptsRef = useRef(0);
 
+  // Store callbacks in refs to avoid recreating connect/disconnect on every render
+  const onEventRef = useRef(onEvent);
+  const onErrorRef = useRef(onError);
+  const onConnectRef = useRef(onConnect);
+  const onDisconnectRef = useRef(onDisconnect);
+
+  // Keep refs updated with latest callbacks
+  useEffect(() => {
+    onEventRef.current = onEvent;
+    onErrorRef.current = onError;
+    onConnectRef.current = onConnect;
+    onDisconnectRef.current = onDisconnect;
+  }, [onEvent, onError, onConnect, onDisconnect]);
+
+  // Stabilize channels array by comparing content, not reference
+  // This prevents connect from being recreated when components pass inline arrays
+  // Using join instead of JSON.stringify for efficiency (channels are always strings)
+  const channelsKey = channels.join(',');
+
+  // Memoize channels array to prevent closure from capturing stale references
+  // This ensures connect always uses a stable reference when channel contents are the same
+  const stableChannels = useMemo(() => channels, [channelsKey]);
+
   const connect = useCallback(() => {
-    if (!enabled || channels.length === 0) return;
+    if (!enabled || stableChannels.length === 0) return;
 
     try {
       // Build URL
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-      const channelsParam = channels.join(',');
+      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+      const channelsParam = stableChannels.join(',');
       const url = new URL(`${apiUrl}/api/events/stream`);
       url.searchParams.set('channels', channelsParam);
       if (token) {
@@ -98,7 +121,7 @@ export function useServerEvents(
         setConnected(true);
         setError(null);
         reconnectAttemptsRef.current = 0;
-        onConnect?.();
+        onConnectRef.current?.();
       };
 
       // Handle errors
@@ -107,7 +130,7 @@ export function useServerEvents(
         const errorObj = new Error('SSE connection failed');
         setError(errorObj);
         setConnected(false);
-        onError?.(errorObj);
+        onErrorRef.current?.(errorObj);
 
         // Auto-reconnect with exponential backoff
         const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000);
@@ -138,7 +161,7 @@ export function useServerEvents(
       });
 
       // Subscribe to all requested channels
-      channels.forEach((channel) => {
+      stableChannels.forEach((channel) => {
         eventSource.addEventListener(channel, (e) => {
           try {
             const data = JSON.parse((e as MessageEvent).data);
@@ -149,7 +172,7 @@ export function useServerEvents(
             };
 
             setLastEvent(event);
-            onEvent?.(event);
+            onEventRef.current?.(event);
           } catch (err) {
             console.error(`[SSE] Failed to parse event for channel ${channel}:`, err);
           }
@@ -158,9 +181,9 @@ export function useServerEvents(
     } catch (err) {
       const errorObj = err instanceof Error ? err : new Error('Failed to connect to SSE');
       setError(errorObj);
-      onError?.(errorObj);
+      onErrorRef.current?.(errorObj);
     }
-  }, [enabled, channels, token, onEvent, onError, onConnect]);
+  }, [enabled, channelsKey, token]);
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -171,9 +194,9 @@ export function useServerEvents(
       eventSourceRef.current.close();
       eventSourceRef.current = null;
       setConnected(false);
-      onDisconnect?.();
+      onDisconnectRef.current?.();
     }
-  }, [onDisconnect]);
+  }, []);
 
   const reconnect = useCallback(() => {
     disconnect();
@@ -210,7 +233,7 @@ export function usePollingEvents(
   useEffect(() => {
     const poll = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+        const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
         const channelsParam = channels.join(',');
         const url = `${apiUrl}/api/events/poll?channels=${channelsParam}&since=${lastTimestampRef.current}`;
 

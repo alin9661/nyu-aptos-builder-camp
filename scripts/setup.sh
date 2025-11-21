@@ -125,18 +125,7 @@ fi
 if [ ! -f "frontend/.env.local" ]; then
     print_info "Creating frontend/.env.local from template..."
     cp frontend/.env.local.example frontend/.env.local
-
-    # Generate Auth0 secret
-    AUTH0_SECRET=$(openssl rand -hex 32)
-
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        sed -i '' "s/your_auth0_secret_here/$AUTH0_SECRET/" frontend/.env.local
-    else
-        sed -i "s/your_auth0_secret_here/$AUTH0_SECRET/" frontend/.env.local
-    fi
-
-    print_success "Frontend .env.local created with generated secret"
-    print_warning "You'll need to add Auth0 credentials manually"
+    print_success "Frontend .env.local created"
 else
     print_warning "frontend/.env.local already exists, skipping..."
 fi
@@ -207,17 +196,14 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "  Next Steps:"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
-echo "1. Configure Auth0 credentials in frontend/.env.local"
-echo "   See: docs/AUTH0_SETUP.md"
-echo ""
-echo "2. Start the development servers:"
+echo "1. Start the development servers:"
 echo "   ./scripts/start-dev.sh"
 echo ""
 echo "   Or manually:"
 echo "   Terminal 1: cd backend && npm run dev"
 echo "   Terminal 2: cd frontend && pnpm dev"
 echo ""
-echo "3. Access the application:"
+echo "2. Access the application:"
 echo "   Frontend:  http://localhost:3000"
 echo "   Backend:   http://localhost:3001"
 echo ""

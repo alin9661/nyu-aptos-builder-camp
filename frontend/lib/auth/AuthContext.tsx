@@ -2,9 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@auth0/nextjs-auth0/client';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
 
 export interface AptosWallet {
   address: string;
@@ -44,11 +43,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [loadingWallet, setLoadingWallet] = useState(false);
   const router = useRouter();
-  const { user: auth0User, isLoading: auth0Loading } = useUser();
 
   // Load user from localStorage and verify token
   useEffect(() => {
     const initAuth = async () => {
+      // Explicit client-side check to prevent any SSR issues
+      if (typeof window === 'undefined') {
+        setIsLoading(false);
+        return;
+      }
+
       const accessToken = localStorage.getItem('accessToken');
       const userAddress = localStorage.getItem('userAddress');
       const userRole = localStorage.getItem('userRole');
@@ -96,68 +100,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initAuth();
   }, []);
 
-  // Auto-login for Auth0 users who don't have backend tokens
-  useEffect(() => {
-    const fetchBackendTokens = async () => {
-      // Skip if Auth0 is loading
-      if (auth0Loading) return;
-
-      // Skip if already have backend tokens
-      const accessToken = localStorage.getItem('accessToken');
-      if (accessToken) return;
-
-      // Skip if not authenticated with Auth0
-      if (!auth0User || !auth0User.sub) return;
-
-      try {
-        console.log('Fetching backend tokens for Auth0 user:', auth0User.sub);
-
-        // Call SSO login endpoint to get backend tokens
-        const response = await fetch(`${API_BASE_URL}/api/auth/sso-login`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            auth0_id: auth0User.sub,
-            email: auth0User.email,
-          }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success && data.data) {
-            // Store tokens in localStorage
-            localStorage.setItem('accessToken', data.data.accessToken);
-            localStorage.setItem('refreshToken', data.data.refreshToken);
-            localStorage.setItem('userAddress', data.data.user.address);
-            localStorage.setItem('userRole', data.data.user.role);
-
-            // Update user state
-            setUser({
-              address: data.data.user.address,
-              role: data.data.user.role,
-              displayName: data.data.user.displayName,
-              email: data.data.user.email,
-            });
-
-            // Fetch wallet info
-            await fetchWalletInfo();
-
-            console.log('Backend tokens fetched successfully');
-          }
-        } else {
-          console.error('Failed to fetch backend tokens:', response.status);
-        }
-      } catch (error) {
-        console.error('Error fetching backend tokens:', error);
-      }
-    };
-
-    fetchBackendTokens();
-  }, [auth0User, auth0Loading]);
-
   const fetchWalletInfo = async () => {
+    if (typeof window === 'undefined') return;
+
     const accessToken = localStorage.getItem('accessToken');
     if (!accessToken) return;
 
@@ -193,10 +138,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const clearAuth = () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('userAddress');
-    localStorage.removeItem('userRole');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('userAddress');
+      localStorage.removeItem('userRole');
+    }
     setUser(null);
   };
 
@@ -206,10 +153,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     address: string,
     role: string
   ) => {
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('refreshToken', refreshToken);
-    localStorage.setItem('userAddress', address);
-    localStorage.setItem('userRole', role);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('userAddress', address);
+      localStorage.setItem('userRole', role);
+    }
 
     setUser({
       address,
@@ -218,6 +167,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
+    if (typeof window === 'undefined') return;
+
     const accessToken = localStorage.getItem('accessToken');
 
     try {
@@ -239,6 +190,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   const tryRefreshToken = async (): Promise<boolean> => {
+    if (typeof window === 'undefined') return false;
+
     const refreshToken = localStorage.getItem('refreshToken');
     if (!refreshToken) return false;
 

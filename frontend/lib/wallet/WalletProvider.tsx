@@ -85,6 +85,9 @@ export function WalletProvider({
   // Initialize available wallets
   useEffect(() => {
     const initWallets = () => {
+      // Ensure we're on the client before initializing wallets
+      if (typeof window === 'undefined') return;
+
       const availableWallets: WalletAdapter[] = [
         {
           name: WalletName.Petra,

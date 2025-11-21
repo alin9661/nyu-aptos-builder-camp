@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from '@/components/ui/toast';
 import { submitReimbursement } from '@/lib/api/treasury';
+import { getCoinSymbol } from '@/lib/api/aptos';
 import { Upload, FileText, X, Loader2 } from 'lucide-react';
 import { useSubmitReimbursement } from '@/hooks/useSubmitReimbursement';
 import TransactionStatusModal from '@/components/TransactionStatusModal';
@@ -153,7 +154,7 @@ export function ReimbursementForm({ onSuccess, onCancel }: ReimbursementFormProp
           {/* Amount Field */}
           <div className="space-y-2">
             <Label htmlFor="amount">
-              Amount (APT) <span className="text-destructive">*</span>
+              Amount ({getCoinSymbol()}) <span className="text-destructive">*</span>
             </Label>
             <Input
               id="amount"

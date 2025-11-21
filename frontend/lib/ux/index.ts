@@ -61,12 +61,12 @@ export {
 
 // Notification Center
 export {
-  NotificationCenterProvider,
   NotificationCenter,
-  useNotifications,
   type Notification,
   type NotificationType,
 } from '@/components/NotificationCenter'
+
+export { useNotifications } from '@/hooks/useNotifications'
 
 // Optimistic Updates
 export {

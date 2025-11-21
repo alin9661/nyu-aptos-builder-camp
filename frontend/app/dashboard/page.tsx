@@ -1,20 +1,14 @@
 'use client';
 
 import { useState } from 'react'
-import { AppSidebar } from '@/components/app-sidebar'
 import { DashboardStats } from '@/components/DashboardStats'
 import { TreasuryBalance } from '@/components/TreasuryBalance'
 import { ReimbursementsList } from '@/components/ReimbursementsList'
 import { ElectionsList } from '@/components/ElectionsList'
 import { ProposalsList } from '@/components/ProposalsList'
 import { SiteHeader } from '@/components/site-header'
-import { AuthGuard } from '@/components/AuthGuard'
 import { WalletSetupBanner, CreateWalletCard } from '@/components/wallet'
 import { useAuth } from '@/lib/auth/AuthContext'
-import {
-  SidebarInset,
-  SidebarProvider,
-} from '@/components/ui/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export default function Page() {
@@ -33,70 +27,69 @@ export default function Page() {
   }
 
   return (
-    <AuthGuard requireAuth={true}>
-      <SidebarProvider
-        style={
-          {
-            "--sidebar-width": "calc(var(--spacing) * 72)",
-            "--header-height": "calc(var(--spacing) * 12)",
-          } as React.CSSProperties
-        }
-      >
-        <AppSidebar variant="inset" />
-        <SidebarInset>
-          <SiteHeader />
-          <div className="flex flex-1 flex-col">
-            <div className="@container/main flex flex-1 flex-col gap-2">
-              <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-                {/* Wallet Setup Banner - Shows if user has no wallet */}
-                {shouldShowWalletSetup && (
-                  <div className="px-4 lg:px-6">
-                    <WalletSetupBanner
-                      onCreateWallet={handleCreateWalletClick}
-                      onDismiss={() => {}}
-                    />
-                  </div>
-                )}
-
-                {/* Create Wallet Card - Shows when user clicks "Create Wallet" */}
-                {shouldShowWalletSetup && showCreateWalletCard && (
-                  <div className="px-4 lg:px-6">
-                    <CreateWalletCard onSuccess={handleWalletCreated} />
-                  </div>
-                )}
-
-                {/* Dashboard Stats */}
-                <DashboardStats />
-
-                {/* Treasury Balance Card */}
-                <div className="px-4 lg:px-6">
-                  <TreasuryBalance autoRefresh={true} refreshInterval={30000} />
-                </div>
-
-                {/* Data Tables with Tabs */}
-                <div className="px-4 lg:px-6">
-                  <Tabs defaultValue="reimbursements" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3">
-                      <TabsTrigger value="reimbursements">Reimbursements</TabsTrigger>
-                      <TabsTrigger value="elections">Elections</TabsTrigger>
-                      <TabsTrigger value="proposals">Proposals</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="reimbursements" className="mt-4">
-                      <ReimbursementsList pageSize={10} showPagination={true} />
-                    </TabsContent>
-                    <TabsContent value="elections" className="mt-4">
-                      <ElectionsList pageSize={10} showPagination={true} />
-                    </TabsContent>
-                    <TabsContent value="proposals" className="mt-4">
-                      <ProposalsList pageSize={10} showPagination={true} />
-                    </TabsContent>
-                  </Tabs>
-                </div>
-              </div>
+    <div className="min-h-screen bg-background flex flex-col">
+      <SiteHeader />
+      <main className="flex-1 p-6 lg:p-8">
+        <div className="mx-auto max-w-7xl space-y-8">
+          
+          {/* Welcome Section */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Welcome back, {user?.username || 'User'}</h1>
+              <p className="text-muted-foreground mt-1">Here's what's happening with your organizations today.</p>
             </div>
           </div>
-        </SidebarInset>
-      </SidebarProvider>
-    </AuthGuard>
+
+          {/* Wallet Setup Banner - Shows if user has no wallet */}
+          {shouldShowWalletSetup && (
+            <WalletSetupBanner
+              onCreateWallet={handleCreateWalletClick}
+              onDismiss={() => {}}
+            />
+          )}
+
+          {/* Create Wallet Card - Shows when user clicks "Create Wallet" */}
+          {shouldShowWalletSetup && showCreateWalletCard && (
+            <CreateWalletCard onSuccess={handleWalletCreated} />
+          )}
+
+          {/* Dashboard Grid Layout */}
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {/* Stats Column */}
+            <div className="space-y-6">
+               <DashboardStats />
+            </div>
+
+            {/* Middle Column - Treasury/Charts */}
+            <div className="space-y-6 lg:col-span-2">
+               <TreasuryBalance autoRefresh={true} refreshInterval={30000} />
+            </div>
+          </div>
+
+          {/* Bottom Section - Lists */}
+          <div className="grid gap-6">
+            <Tabs defaultValue="reimbursements" className="w-full">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">Activity History</h2>
+                <TabsList>
+                  <TabsTrigger value="reimbursements">Reimbursements</TabsTrigger>
+                  <TabsTrigger value="elections">Elections</TabsTrigger>
+                  <TabsTrigger value="proposals">Proposals</TabsTrigger>
+                </TabsList>
+              </div>
+              <TabsContent value="reimbursements" className="mt-0">
+                <ReimbursementsList pageSize={5} showPagination={true} />
+              </TabsContent>
+              <TabsContent value="elections" className="mt-0">
+                <ElectionsList pageSize={5} showPagination={true} />
+              </TabsContent>
+              <TabsContent value="proposals" className="mt-0">
+                <ProposalsList pageSize={5} showPagination={true} />
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
+      </main>
+    </div>
   )
 }

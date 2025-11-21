@@ -20,9 +20,8 @@ echo ""
 JWT_SECRET=$(openssl rand -hex 32)
 SESSION_SECRET=$(openssl rand -hex 32)
 WALLET_ENCRYPTION_SECRET=$(openssl rand -hex 32)
-AUTH0_SECRET=$(openssl rand -hex 32)
 
-echo -e "${GREEN}✓ Generated 4 secure secrets${NC}"
+echo -e "${GREEN}✓ Generated 3 secure secrets${NC}"
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  Copy these values to your .env files:"
@@ -34,10 +33,6 @@ echo "JWT_SECRET=$JWT_SECRET"
 echo "JWT_REFRESH_SECRET=$JWT_SECRET"
 echo "SESSION_SECRET=$SESSION_SECRET"
 echo "WALLET_ENCRYPTION_SECRET=$WALLET_ENCRYPTION_SECRET"
-echo ""
-
-echo -e "${YELLOW}Frontend (.env.local):${NC}"
-echo "AUTH0_SECRET=$AUTH0_SECRET"
 echo ""
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

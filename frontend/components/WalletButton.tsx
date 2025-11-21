@@ -41,7 +41,7 @@ export function WalletButton() {
 
   const handleCopyAddress = () => {
     if (account?.address) {
-      navigator.clipboard.writeText(account.address);
+      navigator.clipboard.writeText(account.address.toString());
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -168,7 +168,7 @@ export function WalletButton() {
           <span className="text-lg">{wallet ? getWalletIcon(wallet.name) : '💼'}</span>
           <div className="flex flex-col items-start">
             <span className="text-xs leading-none">
-              {account?.address ? formatAddress(account.address) : 'Connected'}
+              {account?.address ? formatAddress(account.address.toString()) : 'Connected'}
             </span>
             {network && (
               <span
@@ -197,7 +197,7 @@ export function WalletButton() {
             <span className="text-xs text-muted-foreground">Address</span>
             <div className="flex items-center gap-2">
               <code className="text-xs bg-muted px-2 py-1 rounded flex-1 truncate">
-                {account?.address || 'N/A'}
+                {account?.address ? account.address.toString() : 'N/A'}
               </code>
               <button
                 onClick={(e) => {

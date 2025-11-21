@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useTreasuryBalance } from '@/hooks/useTreasury';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Wallet } from 'lucide-react';
+import { useFormattedDateTime } from '@/lib/utils/dateFormat';
+import { useServerEvents } from '@/hooks/useServerEvents';
 
 interface TreasuryBalanceProps {
   autoRefresh?: boolean;
@@ -19,54 +20,20 @@ export function TreasuryBalance({
   showCoinType = true,
 }: TreasuryBalanceProps) {
   const { data, loading, error, refetch } = useTreasuryBalance(autoRefresh, refreshInterval);
+  const formattedTimestamp = useFormattedDateTime(data?.timestamp || new Date());
 
-  // Real-time updates via WebSocket
-  useEffect(() => {
-    // Connect to WebSocket for real-time updates
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
-
-    let ws: WebSocket | null = null;
-
-    try {
-      ws = new WebSocket(wsUrl);
-
-      ws.onopen = () => {
-        console.log('WebSocket connected for treasury balance');
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const message = JSON.parse(event.data);
-
-          // Refresh on treasury balance events
-          if (message.channel === 'treasury:balance' ||
-              message.channel === 'treasury:deposit') {
-            console.log('Treasury balance update received, refreshing...');
-            refetch();
-          }
-        } catch (err) {
-          console.error('WebSocket message parse error:', err);
-        }
-      };
-
-      ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
-      };
-
-      ws.onclose = () => {
-        console.log('WebSocket disconnected');
-      };
-    } catch (err) {
-      console.error('Failed to connect WebSocket:', err);
-    }
-
-    return () => {
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.close();
-      }
-    };
-  }, [refetch]);
+  // Real-time updates via SSE
+  useServerEvents({
+    channels: ['treasury:balance', 'treasury:deposit'],
+    enabled: true,
+    onEvent: (event) => {
+      console.log('Treasury balance update received:', event.channel);
+      refetch();
+    },
+    onError: (error) => {
+      console.error('SSE connection error:', error);
+    },
+  });
 
   if (loading && !data) {
     return (
@@ -123,7 +90,10 @@ export function TreasuryBalance({
           Current vault balance from blockchain
           {showCoinType && data.coinType && (
             <Badge variant="outline" className="ml-2">
-              {data.coinType.split('::').pop()}
+              {data.coinType.includes('USDC') ? 'USDC' :
+               data.coinType.includes('USDT') ? 'USDT' :
+               data.coinType.includes('AptosCoin') ? 'APT' :
+               data.coinType.split('::').pop()}
             </Badge>
           )}
         </CardDescription>
@@ -134,7 +104,7 @@ export function TreasuryBalance({
           Raw: {data.balance}
         </div>
         <div className="text-xs text-muted-foreground">
-          Last updated: {new Date(data.timestamp).toLocaleString()}
+          Last updated: {formattedTimestamp}
         </div>
       </CardContent>
     </Card>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -37,13 +37,26 @@ export function ProposalCard({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedVote, setSelectedVote] = useState<boolean | null>(null);
 
+  // Use state for current time to ensure consistent SSR/client rendering
+  // Initialize with endDate to assume ended state on server
+  const [now, setNow] = useState<Date>(() => new Date(proposal.end_ts));
+
+  // Update current time on client mount and periodically
+  useEffect(() => {
+    const updateTime = () => setNow(new Date());
+    updateTime(); // Set immediately on mount
+
+    // Update every minute to keep time remaining accurate
+    const interval = setInterval(updateTime, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Calculate voting progress
   const totalVotes = parseInt(proposal.yay_votes) + parseInt(proposal.nay_votes);
   const yayPercentage = totalVotes > 0 ? (parseInt(proposal.yay_votes) / totalVotes) * 100 : 0;
   const nayPercentage = totalVotes > 0 ? (parseInt(proposal.nay_votes) / totalVotes) * 100 : 0;
 
   // Check if voting is active
-  const now = new Date();
   const startDate = new Date(proposal.start_ts);
   const endDate = new Date(proposal.end_ts);
   const isActive = now >= startDate && now < endDate && proposal.statusName === 'Active';

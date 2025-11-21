@@ -218,6 +218,7 @@ export function formatAddress(address: string, chars: number = 4): string {
 
 /**
  * Format balance for display
+ * Supports both APT (8 decimals) and stablecoins (6 decimals)
  */
 export function formatBalance(balance: string | number, decimals: number = 8): string {
   const num = typeof balance === 'string' ? parseFloat(balance) : balance;
@@ -226,17 +227,20 @@ export function formatBalance(balance: string | number, decimals: number = 8): s
     return '0';
   }
 
-  // Convert from octas (1 APT = 10^8 octas)
-  const apt = num / Math.pow(10, decimals);
+  // Convert from smallest unit (e.g., octas for APT, micro-units for USDC)
+  const amount = num / Math.pow(10, decimals);
 
   // Format with appropriate decimal places
-  if (apt < 0.0001) {
-    return apt.toExponential(2);
+  if (amount < 0.0001) {
+    return amount.toExponential(2);
   }
 
-  return apt.toLocaleString(undefined, {
+  // Adjust max decimals based on coin type: USDC = 2, APT = 6
+  const maxDecimals = decimals === 6 ? 2 : 6;
+
+  return amount.toLocaleString(undefined, {
     minimumFractionDigits: 2,
-    maximumFractionDigits: 6,
+    maximumFractionDigits: maxDecimals,
   });
 }
 

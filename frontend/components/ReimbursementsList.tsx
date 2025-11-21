@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useReimbursements } from '@/hooks/useTreasury';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -14,7 +15,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { FileText, ChevronLeft, ChevronRight } from 'lucide-react';
+import { FileText, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
+import { useServerEvents } from '@/hooks/useServerEvents';
 
 interface ReimbursementsListProps {
   pageSize?: number;
@@ -25,6 +27,7 @@ export function ReimbursementsList({
   pageSize = 10,
   showPagination = true,
 }: ReimbursementsListProps) {
+  const router = useRouter();
   const [page, setPage] = useState(1);
   const { data, loading, error, refetch } = useReimbursements({
     page,
@@ -32,54 +35,22 @@ export function ReimbursementsList({
     sort: 'desc',
   });
 
-  // Real-time updates via WebSocket
-  useEffect(() => {
-    // Connect to WebSocket for real-time updates
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
-
-    let ws: WebSocket | null = null;
-
-    try {
-      ws = new WebSocket(wsUrl);
-
-      ws.onopen = () => {
-        console.log('WebSocket connected for reimbursements');
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const message = JSON.parse(event.data);
-
-          // Refresh on new reimbursement events
-          if (message.channel === 'reimbursements:new' ||
-              message.channel === 'reimbursements:approved' ||
-              message.channel === 'reimbursements:paid') {
-            console.log('Reimbursement update received, refreshing...');
-            refetch();
-          }
-        } catch (err) {
-          console.error('WebSocket message parse error:', err);
-        }
-      };
-
-      ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
-      };
-
-      ws.onclose = () => {
-        console.log('WebSocket disconnected');
-      };
-    } catch (err) {
-      console.error('Failed to connect WebSocket:', err);
-    }
-
-    return () => {
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.close();
-      }
-    };
-  }, [refetch]);
+  // Real-time updates via SSE
+  useServerEvents({
+    channels: [
+      'reimbursements:new',
+      'reimbursements:approved',
+      'reimbursements:paid',
+    ],
+    enabled: true,
+    onEvent: (event) => {
+      console.log('Reimbursement update received:', event.channel);
+      refetch();
+    },
+    onError: (error) => {
+      console.error('SSE connection error:', error);
+    },
+  });
 
   if (loading && !data) {
     return (
@@ -163,11 +134,16 @@ export function ReimbursementsList({
                 <TableHead>Description</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Date</TableHead>
+                <TableHead></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {requests.map((request) => (
-                <TableRow key={request.id}>
+                <TableRow
+                  key={request.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => router.push(`/reimbursements/${request.id}`)}
+                >
                   <TableCell className="font-medium">#{request.id}</TableCell>
                   <TableCell>
                     <div className="text-sm">
@@ -194,6 +170,9 @@ export function ReimbursementsList({
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {new Date(request.created_ts).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    <ExternalLink className="h-4 w-4 text-muted-foreground" />
                   </TableCell>
                 </TableRow>
               ))}

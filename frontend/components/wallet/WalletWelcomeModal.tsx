@@ -32,6 +32,9 @@ export function WalletWelcomeModal({
   const [showConfetti, setShowConfetti] = useState(false);
 
   useEffect(() => {
+    // Ensure we're on the client before accessing localStorage
+    if (typeof window === 'undefined') return;
+
     // Check if this is the first time showing the modal
     const hasShown = localStorage.getItem(STORAGE_KEY);
 
@@ -46,7 +49,9 @@ export function WalletWelcomeModal({
   }, [wallet, controlledOpen]);
 
   const handleClose = () => {
-    localStorage.setItem(STORAGE_KEY, 'true');
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY, 'true');
+    }
     setOpen(false);
     onClose?.();
   };

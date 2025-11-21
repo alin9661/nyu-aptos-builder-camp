@@ -1,10 +1,10 @@
 'use client';
 
-import { Auth0Provider } from '@auth0/nextjs-auth0/client';
 import { AuthProvider } from '@/lib/auth/AuthContext';
 import { AptosWalletAdapterProvider } from '@aptos-labs/wallet-adapter-react';
 import { Network } from '@aptos-labs/ts-sdk';
-import { NotificationCenterProvider } from '@/components/NotificationCenter';
+import { toast } from '@/components/ui/toast';
+import { ThemeProvider } from '@/components/theme-provider';
 
 /**
  * Root Providers Component
@@ -20,33 +20,57 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const aptosNetwork = network === 'mainnet' ? Network.MAINNET : Network.TESTNET;
 
   return (
-    <Auth0Provider>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="dark"
+      enableSystem
+      disableTransitionOnChange
+    >
       <AuthProvider>
-        <NotificationCenterProvider>
-          <AptosWalletAdapterProvider
-            // Empty array = support all AIP-62 standard wallets
-            // Wallets will auto-detect if installed
-            optInWallets={[]}
-            // Auto-connect to previously connected wallet on page reload
-            autoConnect={true}
-            // Enhanced dapp configuration
-            dappConfig={{
-              network: aptosNetwork,
-              // Optional: Add API key for production rate limits
-              ...(process.env.NEXT_PUBLIC_APTOS_API_KEY && {
-                aptosApiKey: process.env.NEXT_PUBLIC_APTOS_API_KEY,
-              }),
-            }}
-            // Error handling callback
-            onError={(error) => {
-              console.error('Wallet adapter error:', error);
-              // TODO: Add toast notification for user-facing errors
-            }}
-          >
-            {children}
-          </AptosWalletAdapterProvider>
-        </NotificationCenterProvider>
+        <AptosWalletAdapterProvider
+          // Empty array = support all AIP-62 standard wallets
+          // Wallets will auto-detect if installed
+          optInWallets={[]}
+          // Auto-connect to previously connected wallet on page reload
+          autoConnect={true}
+          // Enhanced dapp configuration
+          dappConfig={{
+            network: aptosNetwork,
+            // Optional: Add API key for production rate limits
+            ...(process.env.NEXT_PUBLIC_APTOS_API_KEY && {
+              aptosApiKey: process.env.NEXT_PUBLIC_APTOS_API_KEY,
+            }),
+          }}
+          // Error handling callback
+          onError={(error) => {
+            console.error('Wallet adapter error:', error);
+
+            // Display user-friendly error messages
+            const errorMessage = error instanceof Error ? error.message : 'Unknown wallet error';
+
+            // Common wallet error messages
+            if (errorMessage.includes('User rejected')) {
+              toast.error('Connection rejected', {
+                description: 'You rejected the wallet connection request.',
+              });
+            } else if (errorMessage.includes('not installed') || errorMessage.includes('No wallet')) {
+              toast.error('Wallet not found', {
+                description: 'Please install a compatible Aptos wallet (e.g., Petra).',
+              });
+            } else if (errorMessage.includes('network')) {
+              toast.error('Network error', {
+                description: 'Please check your wallet is connected to the correct network.',
+              });
+            } else {
+              toast.error('Wallet error', {
+                description: errorMessage,
+              });
+            }
+          }}
+        >
+          {children}
+        </AptosWalletAdapterProvider>
       </AuthProvider>
-    </Auth0Provider>
+    </ThemeProvider>
   );
 }
