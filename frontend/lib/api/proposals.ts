@@ -13,6 +13,9 @@ import {
   ProposalFilters,
   Pagination,
 } from '../types/api';
+import { DEFAULT_CHAIN_ID } from '../chains';
+
+const PLAN_A_CHAIN_ID = DEFAULT_CHAIN_ID;
 
 /**
  * Proposals API module
@@ -51,6 +54,8 @@ export async function getProposals(
           const details = await getProposalDetailsFromChain(p.proposal_id);
 
           return {
+            chainId: PLAN_A_CHAIN_ID,
+            chainIds: [PLAN_A_CHAIN_ID],
             proposal_id: p.proposal_id,
             title: p.title,
             description: '', // Not in ProposalCreatedEvent
@@ -66,6 +71,8 @@ export async function getProposals(
         } catch (error) {
           // If details fetch fails, return basic info
           return {
+            chainId: PLAN_A_CHAIN_ID,
+            chainIds: [PLAN_A_CHAIN_ID],
             proposal_id: p.proposal_id,
             title: p.title,
             description: '',
@@ -134,6 +141,8 @@ export async function getProposalDetails(
     const details = await getProposalDetailsFromChain(id);
 
     const proposalDetails: ProposalDetails = {
+      chainId: PLAN_A_CHAIN_ID,
+      chainIds: [PLAN_A_CHAIN_ID],
       proposal_id: proposal.proposal_id,
       title: proposal.title,
       description: '',
@@ -225,6 +234,8 @@ export async function getActiveProposals(): Promise<
         try {
           const details = await getProposalDetailsFromChain(p.proposal_id);
           return {
+            chainId: PLAN_A_CHAIN_ID,
+            chainIds: [PLAN_A_CHAIN_ID],
             proposal_id: p.proposal_id,
             title: p.title,
             description: '',
@@ -239,6 +250,8 @@ export async function getActiveProposals(): Promise<
           };
         } catch (error) {
           return {
+            chainId: PLAN_A_CHAIN_ID,
+            chainIds: [PLAN_A_CHAIN_ID],
             proposal_id: p.proposal_id,
             title: p.title,
             description: '',
@@ -284,6 +297,8 @@ export async function getProposalStats(): Promise<ApiResponse<ProposalStats>> {
     // Fetch recent proposals
     const recentProposals = await getProposalsFromChain({ limit: 5 });
     const recentProposalsList = recentProposals.map((p) => ({
+      chainId: PLAN_A_CHAIN_ID,
+      chainIds: [PLAN_A_CHAIN_ID],
       proposal_id: p.proposal_id,
       title: p.title,
       creator: p.creator,

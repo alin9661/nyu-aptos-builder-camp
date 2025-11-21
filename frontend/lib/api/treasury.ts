@@ -14,7 +14,13 @@ import {
   TransactionSubmission,
   PaginationParams,
   Pagination,
+  ChainBalance,
+  TreasuryOverview,
 } from '../types/api';
+import { CHAINS, DEFAULT_CHAIN_ID } from '../chains';
+
+const APTOS_CHAIN_ID = DEFAULT_CHAIN_ID;
+const APTOS_CHAIN = CHAINS[APTOS_CHAIN_ID];
 
 /**
  * Treasury API module
@@ -22,21 +28,70 @@ import {
  */
 
 /**
- * Get current vault balance from blockchain
+ * Plan A cross-chain overview (currently Aptos-only).
+ * Wraps the existing balance call so we can add Ethereum/others later.
  */
-export async function getTreasuryBalance(): Promise<ApiResponse<TreasuryBalance>> {
+export async function getTreasuryOverview(): Promise<ApiResponse<TreasuryOverview>> {
   try {
-    const data = await getBalanceFromChain();
+    const balance = await getBalanceFromChain();
+
+    const aptosChain: ChainBalance = {
+      chainId: balance.chainId ?? APTOS_CHAIN_ID,
+      balance: balance.balance,
+      balanceFormatted: balance.balanceFormatted,
+      coinType: balance.coinType,
+      nativeTokenSymbol: APTOS_CHAIN.nativeTokenSymbol,
+      timestamp: balance.timestamp,
+    };
+
     return {
       success: true,
-      data,
+      data: {
+        chains: [aptosChain],
+        totalBalance: balance.balance,
+      },
     };
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to fetch treasury balance',
+      error: error instanceof Error ? error.message : 'Failed to fetch treasury overview',
     };
   }
+}
+
+/**
+ * Get current vault balance from blockchain (backwards compatibility wrapper)
+ */
+export async function getTreasuryBalance(): Promise<ApiResponse<TreasuryBalance>> {
+  const overview = await getTreasuryOverview();
+
+  if (!overview.success || !overview.data) {
+    return {
+      success: false,
+      error: overview.error || 'Failed to fetch treasury balance',
+    };
+  }
+
+  const [aptos] = overview.data.chains;
+
+  if (!aptos) {
+    return {
+      success: false,
+      error: 'No chains available in treasury overview',
+    };
+  }
+
+  return {
+    success: true,
+    data: {
+      chainId: aptos.chainId,
+      chainDisplayName: APTOS_CHAIN.displayName,
+      balance: aptos.balance,
+      balanceFormatted: aptos.balanceFormatted || '0.00 APT',
+      coinType: aptos.coinType || '0x1::aptos_coin::AptosCoin',
+      timestamp: aptos.timestamp || new Date().toISOString(),
+    },
+  };
 }
 
 /**
@@ -62,6 +117,7 @@ export async function getTreasuryTransactions(
     // Transform to match Transaction type
     const formattedTxs: Transaction[] = transactions.map((tx, index) => ({
       id: offset + index,
+      chainId: tx.chainId ?? APTOS_CHAIN_ID,
       source: tx.sender === tx.sender ? 'DEPOSIT' : 'REIMBURSEMENT', // Simplified
       amount: '0', // Would need to parse events for actual amounts
       total_balance: '0',

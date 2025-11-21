@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   getElections,
   getElectionDetails,
   getRoles,
   getMembers,
   getGovernanceStats,
+  getCrossChainProposals,
+  getProposalWithChainActions,
 } from '@/lib/api/governance';
 import {
   Election,
@@ -15,6 +17,8 @@ import {
   Member,
   ElectionFilters,
   Pagination,
+  ProposalFilters,
+  ProposalWithChainActions,
 } from '@/lib/types/api';
 import { ApiError } from '@/lib/api/client';
 
@@ -251,4 +255,113 @@ export function useGovernanceStats(autoRefresh = false, refreshInterval = 60000)
   }, [fetchStats, autoRefresh, refreshInterval]);
 
   return { ...state, refetch: fetchStats };
+}
+
+/**
+ * Hook for cross-chain proposals (Plan A: Aptos-only, chain-aware types).
+ */
+export function useCrossChainProposals(
+  filters?: ProposalFilters,
+  options?: { autoRefresh?: boolean; refreshInterval?: number }
+) {
+  const autoRefresh = options?.autoRefresh ?? false;
+  const refreshInterval = options?.refreshInterval ?? 60000;
+  const serializedFilters = JSON.stringify(filters ?? {});
+  const normalizedFilters = useMemo(
+    () => (filters ? { ...filters } : undefined),
+    [serializedFilters]
+  );
+
+  const [state, setState] = useState<
+    UseDataState<{ proposals: ProposalWithChainActions[]; pagination: Pagination }>
+  >({
+    data: null,
+    loading: true,
+    error: null,
+  });
+
+  const fetchProposals = useCallback(async () => {
+    try {
+      setState(prev => ({ ...prev, loading: true, error: null }));
+      const response = await getCrossChainProposals(normalizedFilters);
+
+      if (response.success && response.data) {
+        setState({ data: response.data, loading: false, error: null });
+      } else {
+        setState({
+          data: null,
+          loading: false,
+          error: response.error || 'Failed to fetch cross-chain proposals',
+        });
+      }
+    } catch (error) {
+      setState({
+        data: null,
+        loading: false,
+        error:
+          error instanceof ApiError
+            ? error.message
+            : 'An unexpected error occurred',
+      });
+    }
+  }, [normalizedFilters, serializedFilters]);
+
+  useEffect(() => {
+    fetchProposals();
+
+    if (autoRefresh) {
+      const interval = setInterval(fetchProposals, refreshInterval);
+      return () => clearInterval(interval);
+    }
+  }, [fetchProposals, autoRefresh, refreshInterval]);
+
+  return { ...state, refetch: fetchProposals };
+}
+
+/**
+ * Hook for fetching a single proposal with chain actions.
+ */
+export function useProposalWithChainActions(proposalId: number | null) {
+  const [state, setState] = useState<UseDataState<ProposalWithChainActions>>({
+    data: null,
+    loading: proposalId !== null,
+    error: null,
+  });
+
+  const fetchDetails = useCallback(async () => {
+    if (proposalId === null) {
+      setState({ data: null, loading: false, error: null });
+      return;
+    }
+
+    try {
+      setState(prev => ({ ...prev, loading: true, error: null }));
+      const response = await getProposalWithChainActions(proposalId);
+
+      if (response.success && response.data) {
+        setState({ data: response.data, loading: false, error: null });
+      } else {
+        setState({
+          data: null,
+          loading: false,
+          error: response.error || 'Failed to fetch proposal actions',
+        });
+      }
+    } catch (error) {
+      setState({
+        data: null,
+        loading: false,
+        error:
+          error instanceof ApiError
+            ? error.message
+            : 'An unexpected error occurred',
+      });
+    }
+  }, [proposalId]);
+
+  useEffect(() => {
+    fetchDetails();
+  }, [fetchDetails]);
+
+  return { ...state, refetch: fetchDetails };
 }

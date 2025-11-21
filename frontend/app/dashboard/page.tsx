@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { AppSidebar } from '@/components/app-sidebar'
 import { DashboardStats } from '@/components/DashboardStats'
-import { TreasuryBalance } from '@/components/TreasuryBalance'
+import { CrossChainTreasuryOverview } from '@/components/treasury/CrossChainTreasuryOverview'
 import { ReimbursementsList } from '@/components/ReimbursementsList'
 import { ElectionsList } from '@/components/ElectionsList'
 import { ProposalsList } from '@/components/ProposalsList'
@@ -68,9 +68,9 @@ export default function Page() {
                 {/* Dashboard Stats */}
                 <DashboardStats />
 
-                {/* Treasury Balance Card */}
+                {/* Cross-chain Treasury Overview */}
                 <div className="px-4 lg:px-6">
-                  <TreasuryBalance autoRefresh={true} refreshInterval={30000} />
+                  <CrossChainTreasuryOverview />
                 </div>
 
                 {/* Data Tables with Tabs */}

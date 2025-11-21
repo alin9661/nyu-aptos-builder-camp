@@ -9,6 +9,7 @@
 
 // Re-export treasury hooks
 export {
+  useTreasuryOverview,
   useTreasuryBalance,
   useTreasuryTransactions,
   useTreasuryStats,
@@ -23,6 +24,8 @@ export {
   useRoles,
   useMembers,
   useGovernanceStats,
+  useCrossChainProposals,
+  useProposalWithChainActions,
 } from './useGovernance';
 
 // Re-export proposals hooks

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   getTreasuryBalance,
+  getTreasuryOverview,
   getTreasuryTransactions,
   getTreasuryStats,
   getReimbursements,
@@ -10,6 +11,7 @@ import {
 } from '@/lib/api/treasury';
 import {
   TreasuryBalance,
+  TreasuryOverview,
   Transaction,
   TreasuryStats,
   ReimbursementRequest,
@@ -23,6 +25,54 @@ interface UseDataState<T> {
   data: T | null;
   loading: boolean;
   error: string | null;
+}
+
+/**
+ * Hook for fetching the cross-chain treasury overview (Plan A Aptos-only).
+ */
+export function useTreasuryOverview(autoRefresh = false, refreshInterval = 30000) {
+  const [state, setState] = useState<UseDataState<TreasuryOverview>>({
+    data: null,
+    loading: true,
+    error: null,
+  });
+
+  const fetchOverview = useCallback(async () => {
+    try {
+      setState(prev => ({ ...prev, loading: true, error: null }));
+      const response = await getTreasuryOverview();
+
+      if (response.success && response.data) {
+        setState({ data: response.data, loading: false, error: null });
+      } else {
+        setState({
+          data: null,
+          loading: false,
+          error: response.error || 'Failed to fetch treasury overview',
+        });
+      }
+    } catch (error) {
+      setState({
+        data: null,
+        loading: false,
+        error:
+          error instanceof ApiError
+            ? error.message
+            : 'An unexpected error occurred',
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchOverview();
+
+    if (autoRefresh) {
+      const interval = setInterval(fetchOverview, refreshInterval);
+      return () => clearInterval(interval);
+    }
+  }, [fetchOverview, autoRefresh, refreshInterval]);
+
+  return { ...state, refetch: fetchOverview };
 }
 
 /**

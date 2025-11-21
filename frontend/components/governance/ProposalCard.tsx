@@ -17,7 +17,8 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Proposal, ProposalVote } from '@/lib/types/api';
+import { Proposal, ProposalVote, ChainAction } from '@/lib/types/api';
+import { CHAINS, ChainId } from '@/lib/chains';
 
 interface ProposalCardProps {
   proposal: Proposal;
@@ -25,6 +26,8 @@ interface ProposalCardProps {
   userVote?: ProposalVote | null;
   votingPower?: number;
   onVoteSuccess?: () => void;
+  chainActions?: ChainAction[];
+  chainIds?: ChainId[];
 }
 
 export function ProposalCard({
@@ -33,6 +36,8 @@ export function ProposalCard({
   userVote = null,
   votingPower = 2,
   onVoteSuccess,
+  chainActions = [],
+  chainIds,
 }: ProposalCardProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedVote, setSelectedVote] = useState<boolean | null>(null);
@@ -140,6 +145,18 @@ export function ProposalCard({
       .slice(0, 2);
   };
 
+  const proposalChains =
+    chainIds ??
+    proposal.chainIds ??
+    (proposal.chainId ? [proposal.chainId] : []);
+
+  const resolvedActions =
+    (chainActions && chainActions.length > 0
+      ? chainActions
+      : proposal.chainActions || []) ?? [];
+
+  const groupedActions = groupChainActions(resolvedActions);
+
   return (
     <Card>
       <CardHeader>
@@ -150,6 +167,11 @@ export function ProposalCard({
               <Badge variant={getStatusVariant(proposal.statusName)}>
                 {proposal.statusName}
               </Badge>
+              {proposalChains.map(chainId => (
+                <Badge key={chainId} variant="secondary">
+                  {CHAINS[chainId].displayName}
+                </Badge>
+              ))}
               {hasVoted && (
                 <Badge variant="secondary" className="gap-1">
                   <CheckCircle className="h-3 w-3" />
@@ -322,7 +344,45 @@ export function ProposalCard({
           <span>Start: {new Date(proposal.start_ts).toLocaleString()}</span>
           <span>End: {new Date(proposal.end_ts).toLocaleString()}</span>
         </div>
+
+        {/* Chain Actions */}
+        {groupedActions.length > 0 && (
+          <div className="pt-4 border-t space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Chain Actions</span>
+              <Badge variant="outline">Plan A · Aptos</Badge>
+            </div>
+            {groupedActions.map(({ chainId, actions }) => (
+              <div key={`${proposal.proposal_id}-${chainId}`} className="text-sm">
+                <p className="font-semibold mb-1">{CHAINS[chainId].displayName}</p>
+                <ul className="list-disc ml-5 text-muted-foreground space-y-1">
+                  {actions.map((action, index) => (
+                    <li key={`${action.type}-${index}`}>
+                      <span className="font-medium">{action.type}</span> — {action.description}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
+}
+
+function groupChainActions(actions: ChainAction[]) {
+  const groups: Record<ChainId, ChainAction[]> = {} as Record<ChainId, ChainAction[]>;
+
+  actions.forEach(action => {
+    if (!groups[action.chainId]) {
+      groups[action.chainId] = [];
+    }
+    groups[action.chainId].push(action);
+  });
+
+  return Object.entries(groups).map(([chainId, value]) => ({
+    chainId: chainId as ChainId,
+    actions: value,
+  }));
 }

@@ -1,4 +1,5 @@
 import { Aptos, AptosConfig, Network } from '@aptos-labs/ts-sdk';
+import { CHAINS, ChainId, DEFAULT_CHAIN_ID } from '../chains';
 
 /**
  * Aptos blockchain client configuration and utilities
@@ -12,6 +13,8 @@ export const MODULE_ADDRESS = process.env.NEXT_PUBLIC_MODULE_ADDRESS || '0xCAFE'
 export const COIN_TYPE = '0x1::aptos_coin::AptosCoin';
 const APTOS_COIN_TYPE = COIN_TYPE; // Internal alias for backward compatibility
 const MODULE_NAME = 'nyu_aptos_builder_camp';
+const APTOS_CHAIN_ID: ChainId = DEFAULT_CHAIN_ID;
+const APTOS_CHAIN = CHAINS[APTOS_CHAIN_ID];
 
 // Initialize Aptos client
 const config = NODE_URL
@@ -99,6 +102,8 @@ function isResourceNotFoundError(error: any): boolean {
  * Get treasury balance from Vault resource
  */
 export async function getTreasuryBalance(): Promise<{
+  chainId: ChainId;
+  chainDisplayName: string;
   balance: string;
   balanceFormatted: string;
   coinType: string;
@@ -117,6 +122,8 @@ export async function getTreasuryBalance(): Promise<{
     const balance = (resource.balance as any)?.value || '0';
 
     return {
+      chainId: APTOS_CHAIN_ID,
+      chainDisplayName: APTOS_CHAIN.displayName,
       balance,
       balanceFormatted: formatAPT(balance),
       coinType: APTOS_COIN_TYPE,
@@ -127,6 +134,8 @@ export async function getTreasuryBalance(): Promise<{
     if (isResourceNotFoundError(error)) {
       console.warn('Contracts not deployed yet. Returning empty treasury balance.');
       return {
+        chainId: APTOS_CHAIN_ID,
+        chainDisplayName: APTOS_CHAIN.displayName,
         balance: '0',
         balanceFormatted: '0.00 APT',
         coinType: APTOS_COIN_TYPE,
@@ -457,6 +466,7 @@ export async function getTransactionHistory(params?: {
     });
 
     return transactions.map((tx: any) => ({
+      chainId: APTOS_CHAIN_ID,
       version: tx.version,
       hash: tx.hash,
       type: tx.type,

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { AppSidebar } from '@/components/app-sidebar';
 import { SiteHeader } from '@/components/site-header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
@@ -23,9 +23,11 @@ import { ElectionForm } from '@/components/governance/ElectionForm';
 import { VotingCard } from '@/components/governance/VotingCard';
 import { ElectionResults } from '@/components/governance/ElectionResults';
 import { ProposalCard } from '@/components/governance/ProposalCard';
-import { useElections, useGovernanceStats } from '@/hooks/useGovernance';
+import { CrossChainGovernanceOverview } from '@/components/governance/CrossChainGovernanceOverview';
+import { useElections, useGovernanceStats, useCrossChainProposals } from '@/hooks/useGovernance';
 import { useActiveProposals } from '@/hooks/useProposals';
-import { Election } from '@/lib/types/api';
+import { Election, ChainAction } from '@/lib/types/api';
+import { ChainId } from '@/lib/chains';
 
 export default function GovernancePage() {
   const [showElectionForm, setShowElectionForm] = useState(false);
@@ -42,6 +44,22 @@ export default function GovernancePage() {
     sort: 'desc',
   });
   const { data: proposalsData, loading: proposalsLoading, refetch: refetchProposals } = useActiveProposals(true, 30000);
+  const { data: crossChainData } = useCrossChainProposals(
+    { page: 1, limit: 50 },
+    { autoRefresh: true, refreshInterval: 60000 }
+  );
+  const chainMetadataByProposal = useMemo(() => {
+    const map = new Map<number, { actions: ChainAction[]; chainIds?: ChainId[] }>();
+
+    crossChainData?.proposals.forEach(proposal => {
+      map.set(proposal.proposal_id, {
+        actions: proposal.actions,
+        chainIds: proposal.chainIds,
+      });
+    });
+
+    return map;
+  }, [crossChainData]);
 
   // TODO: Replace with actual wallet integration
   useEffect(() => {
@@ -178,6 +196,11 @@ export default function GovernancePage() {
                     </Card>
                   </div>
                 ) : null}
+              </div>
+
+              {/* Cross-chain governance summary */}
+              <div className="px-4 lg:px-6">
+                <CrossChainGovernanceOverview />
               </div>
 
               {/* Election Form (Admin Only) */}
@@ -349,15 +372,20 @@ export default function GovernancePage() {
                         </CardContent>
                       </Card>
                     ) : (
-                      proposalsData.proposals.map((proposal) => (
-                        <ProposalCard
-                          key={proposal.proposal_id}
-                          proposal={proposal}
-                          userAddress={userAddress || undefined}
-                          votingPower={votingPower}
-                          onVoteSuccess={refetchProposals}
-                        />
-                      ))
+                      proposalsData.proposals.map((proposal) => {
+                        const crossChainEntry = chainMetadataByProposal.get(proposal.proposal_id);
+                        return (
+                          <ProposalCard
+                            key={proposal.proposal_id}
+                            proposal={proposal}
+                            userAddress={userAddress || undefined}
+                            votingPower={votingPower}
+                            onVoteSuccess={refetchProposals}
+                            chainActions={crossChainEntry?.actions || []}
+                            chainIds={crossChainEntry?.chainIds}
+                          />
+                        );
+                      })
                     )}
                   </TabsContent>
                 </Tabs>

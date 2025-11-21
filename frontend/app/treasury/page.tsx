@@ -18,6 +18,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { TreasuryBalance } from '@/components/TreasuryBalance';
+import { CrossChainTreasuryOverview } from '@/components/treasury/CrossChainTreasuryOverview';
 import { ReimbursementForm } from '@/components/treasury/ReimbursementForm';
 import { ApprovalWorkflow } from '@/components/treasury/ApprovalWorkflow';
 import { ReceiptViewer } from '@/components/treasury/ReceiptViewer';
@@ -142,6 +143,7 @@ export default function TreasuryPage() {
 
                   {/* Overview Tab */}
                   <TabsContent value="overview" className="space-y-4 mt-4">
+                    <CrossChainTreasuryOverview />
                     {/* Treasury Balance */}
                     <TreasuryBalance autoRefresh={true} refreshInterval={30000} />
 

@@ -1,3 +1,5 @@
+import { ChainId } from '../chains';
+
 // Common API Response Types
 export interface ApiResponse<T> {
   success: boolean;
@@ -20,14 +22,33 @@ export interface PaginatedResponse<T> extends ApiResponse<{
 
 // Treasury Types
 export interface TreasuryBalance {
+  chainId?: ChainId;
+  chainDisplayName?: string;
   balance: string;
   balanceFormatted: string;
   coinType: string;
   timestamp: string;
 }
 
+export interface ChainBalance {
+  chainId: ChainId;
+  balance: string;
+  balanceFormatted?: string;
+  nativeTokenSymbol?: string;
+  usdValue?: string;
+  timestamp?: string;
+  coinType?: string;
+}
+
+export interface TreasuryOverview {
+  chains: ChainBalance[];
+  totalBalance?: string;
+  totalUsdValue?: string;
+}
+
 export interface Transaction {
   id: number;
+  chainId?: ChainId;
   source: string;
   amount: string;
   total_balance: string;
@@ -190,6 +211,8 @@ export interface VoteStats {
 
 export interface Proposal {
   proposal_id: number;
+  chainId?: ChainId;
+  chainIds?: ChainId[];
   title: string;
   description: string;
   creator: string;
@@ -201,6 +224,7 @@ export interface Proposal {
   start_ts: string;
   end_ts: string;
   voteStats: VoteStats;
+  chainActions?: ChainAction[];
 }
 
 export interface ProposalVote {
@@ -213,6 +237,20 @@ export interface ProposalVote {
 
 export interface ProposalDetails extends Proposal {
   votes: ProposalVote[];
+}
+
+export interface ChainAction {
+  chainId: ChainId;
+  type: 'TRANSFER' | 'UPDATE_ROLE' | 'REIMBURSE' | string;
+  description: string;
+  payload?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+  timestamp?: string;
+  status?: 'PENDING' | 'READY' | 'EXECUTED';
+}
+
+export interface ProposalWithChainActions extends Proposal {
+  actions: ChainAction[];
 }
 
 export interface ProposalStats {

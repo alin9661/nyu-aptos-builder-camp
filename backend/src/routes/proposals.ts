@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { aptos, PROPOSAL_STATUS_NAMES } from '../config/aptos';
+import { aptos, PROPOSAL_STATUS_NAMES, formatCoinAmount } from '../config/aptos';
 import { query } from '../config/database';
 import { logger } from '../utils/logger';
 import { validateQuery, paginationSchema } from '../utils/validators';
@@ -98,6 +98,8 @@ router.get('/', optionalAuth as any, validateQuery(paginationSchema), async (req
       params
     );
 
+    const chainActionsMap = await buildProposalChainActions(proposals);
+
     // Get vote counts for each proposal
     const proposalsWithVotes = await Promise.all(
       proposals.map(async (proposal) => {
@@ -121,6 +123,7 @@ router.get('/', optionalAuth as any, validateQuery(paginationSchema), async (req
             yayVoters: parseInt(voteStats[0]?.yay_voters || 0),
             nayVoters: parseInt(voteStats[0]?.nay_voters || 0),
           },
+          chainActions: chainActionsMap[Number(proposal.proposal_id)] || [],
         };
       })
     );
@@ -142,6 +145,131 @@ router.get('/', optionalAuth as any, validateQuery(paginationSchema), async (req
     return res.status(500).json({
       success: false,
       error: 'Failed to fetch proposals',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+/**
+ * GET /api/proposals/actions
+ * Get chain actions for multiple proposals (ids query parameter)
+ */
+router.get('/actions', async (req: Request, res: Response) => {
+  try {
+    const idsParam = req.query.ids;
+
+    if (!idsParam) {
+      return res.status(400).json({
+        success: false,
+        error: 'ids query parameter is required',
+      });
+    }
+
+    const idList = Array.isArray(idsParam)
+      ? idsParam
+          .flatMap(id => String(id).split(','))
+          .map(id => id.trim())
+      : String(idsParam)
+          .split(',')
+          .map(id => id.trim());
+
+    const proposalIds = idList
+      .map(id => Number(id))
+      .filter(id => !Number.isNaN(id));
+
+    if (proposalIds.length === 0) {
+      return res.json({
+        success: true,
+        data: {
+          actions: {},
+        },
+      });
+    }
+
+    const proposals = await query(
+      `SELECT proposal_id, status, executed, updated_at
+       FROM proposals
+       WHERE proposal_id = ANY($1::bigint[])`,
+      [proposalIds]
+    );
+
+    const normalizedProposals = proposalIds.map(id => {
+      const existing = proposals.find(p => Number(p.proposal_id) === id);
+      if (existing) {
+        return existing;
+      }
+      return {
+        proposal_id: id,
+        status: null,
+        executed: false,
+        updated_at: null,
+      };
+    });
+
+    const actionsMap = await buildProposalChainActions(normalizedProposals);
+
+    return res.json({
+      success: true,
+      data: {
+        actions: actionsMap,
+      },
+    });
+  } catch (error) {
+    logger.error('Failed to fetch proposal actions', { error });
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to fetch proposal actions',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+/**
+ * GET /api/proposals/:id/actions
+ * Get chain actions for a single proposal
+ */
+router.get('/:id/actions', async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+
+    if (Number.isNaN(id)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid proposal id',
+      });
+    }
+
+    const proposals = await query(
+      `SELECT proposal_id, status, executed, updated_at
+       FROM proposals
+       WHERE proposal_id = $1`,
+      [id]
+    );
+
+    const normalized = proposals.length
+      ? proposals
+      : [
+          {
+            proposal_id: id,
+            status: null,
+            executed: false,
+            updated_at: null,
+          },
+        ];
+
+    const actionsMap = await buildProposalChainActions(normalized);
+
+    return res.json({
+      success: true,
+      data: {
+        actions: actionsMap[id] || [],
+      },
+    });
+  } catch (error) {
+    logger.error('Failed to fetch proposal actions', { error });
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to fetch proposal actions',
       message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
@@ -202,6 +330,8 @@ router.get('/:id', async (req: Request, res: Response) => {
       [id]
     );
 
+    const chainActionsMap = await buildProposalChainActions([proposal]);
+
     return res.json({
       success: true,
       data: {
@@ -220,6 +350,7 @@ router.get('/:id', async (req: Request, res: Response) => {
           yayWeight: voteStats[0]?.yay_weight?.toString() || '0',
           nayWeight: voteStats[0]?.nay_weight?.toString() || '0',
         },
+        chainActions: chainActionsMap[Number(proposal.proposal_id)] || [],
       },
     });
   } catch (error) {
@@ -412,3 +543,202 @@ router.get('/stats/overview', async (_req: Request, res: Response) => {
 });
 
 export default router;
+
+type ChainActionDto = {
+  chainId: string;
+  type: 'REIMBURSE' | 'TRANSFER' | 'UPDATE_ROLE' | 'EXECUTE';
+  description: string;
+  timestamp?: string;
+  metadata?: Record<string, any>;
+};
+
+async function buildProposalChainActions(
+  proposals: Array<{ proposal_id: number; status?: number | null; executed?: boolean; updated_at?: Date | null }>
+): Promise<Record<number, ChainActionDto[]>> {
+  const ids = proposals
+    .map(proposal => Number(proposal.proposal_id))
+    .filter(id => !Number.isNaN(id));
+
+  const actionsById: Record<number, ChainActionDto[]> = {};
+  ids.forEach(id => {
+    actionsById[id] = [];
+  });
+
+  if (ids.length === 0) {
+    return actionsById;
+  }
+
+  const reimbursementRequests = await query(
+    `SELECT
+       r.*,
+       payer.display_name as payer_name,
+       payee.display_name as payee_name
+     FROM reimbursement_requests r
+     LEFT JOIN users payer ON r.payer = payer.address
+     LEFT JOIN users payee ON r.payee = payee.address
+     WHERE r.id = ANY($1::bigint[])`,
+    [ids]
+  );
+
+  reimbursementRequests.forEach(request => {
+    const proposalId = Number(request.id);
+    if (Number.isNaN(proposalId)) {
+      return;
+    }
+    ensureActionBucket(actionsById, proposalId);
+
+    const amountBigInt = BigInt(request.amount || 0);
+    const amountFormatted = `${formatCoinAmount(amountBigInt)} APT`;
+    const payerName = request.payer_name || formatAddress(request.payer);
+    const payeeName = request.payee_name || formatAddress(request.payee);
+    const createdTimestamp =
+      request.created_at instanceof Date
+        ? request.created_at.toISOString()
+        : request.created_ts
+        ? new Date(Number(request.created_ts) * 1000).toISOString()
+        : undefined;
+
+    actionsById[proposalId].push({
+      chainId: 'aptos',
+      type: 'REIMBURSE',
+      description: `Reimbursement request #${request.id} submitted by ${payerName} for ${amountFormatted} to ${payeeName}`,
+      timestamp: createdTimestamp,
+      metadata: {
+        requestId: request.id,
+        payer: request.payer,
+        payee: request.payee,
+        amount: request.amount?.toString?.() || request.amount,
+      },
+    });
+  });
+
+  const reimbursementPayments = await query(
+    `SELECT
+       p.*,
+       u.display_name as payee_name
+     FROM reimbursement_payments p
+     LEFT JOIN users u ON p.payee = u.address
+     WHERE p.request_id = ANY($1::bigint[])`,
+    [ids]
+  );
+
+  reimbursementPayments.forEach(payment => {
+    const proposalId = Number(payment.request_id);
+    if (Number.isNaN(proposalId)) {
+      return;
+    }
+    ensureActionBucket(actionsById, proposalId);
+    const amountBigInt = BigInt(payment.amount || 0);
+    const amountFormatted = `${formatCoinAmount(amountBigInt)} APT`;
+    const payeeName = payment.payee_name || formatAddress(payment.payee);
+    const timestamp =
+      payment.timestamp instanceof Date ? payment.timestamp.toISOString() : undefined;
+
+    actionsById[proposalId].push({
+      chainId: 'aptos',
+      type: 'TRANSFER',
+      description: `Transferred ${amountFormatted} to ${payeeName} as reimbursement #${payment.request_id}`,
+      timestamp,
+      metadata: {
+        payee: payment.payee,
+        amount: payment.amount?.toString?.() || payment.amount,
+        transactionHash: payment.transaction_hash,
+      },
+    });
+  });
+
+  const electionRows = await query(
+    `SELECT
+       e.election_id,
+       e.role_name,
+       e.winner,
+       e.finalized,
+       e.updated_at,
+       u.display_name as winner_name
+     FROM elections e
+     LEFT JOIN users u ON e.winner = u.address
+     WHERE e.election_id = ANY($1::bigint[])`,
+    [ids]
+  );
+
+  electionRows.forEach(election => {
+    const proposalId = Number(election.election_id);
+    if (Number.isNaN(proposalId)) {
+      return;
+    }
+    ensureActionBucket(actionsById, proposalId);
+    const roleName = formatRoleName(election.role_name);
+    const winnerLabel = election.winner
+      ? election.winner_name || formatAddress(election.winner)
+      : 'TBD';
+    const description = election.finalized
+      ? `Updated ${roleName} role to ${winnerLabel}`
+      : `Election in progress for ${roleName}`;
+    const timestamp =
+      election.updated_at instanceof Date ? election.updated_at.toISOString() : undefined;
+
+    actionsById[proposalId].push({
+      chainId: 'aptos',
+      type: 'UPDATE_ROLE',
+      description,
+      timestamp,
+      metadata: {
+        role: election.role_name,
+        winner: election.winner,
+        finalized: election.finalized,
+      },
+    });
+  });
+
+  proposals.forEach(proposal => {
+    const proposalId = Number(proposal.proposal_id);
+    if (Number.isNaN(proposalId)) {
+      return;
+    }
+
+    if (proposal.executed || proposal.status === 4) {
+      ensureActionBucket(actionsById, proposalId);
+      const timestamp =
+        proposal.updated_at instanceof Date ? proposal.updated_at.toISOString() : undefined;
+
+      actionsById[proposalId].push({
+        chainId: 'aptos',
+        type: 'EXECUTE',
+        description: 'Proposal executed on Aptos',
+        timestamp,
+        metadata: {
+          status: proposal.status,
+        },
+      });
+    }
+  });
+
+  return actionsById;
+}
+
+function ensureActionBucket(map: Record<number, ChainActionDto[]>, proposalId: number) {
+  if (!map[proposalId]) {
+    map[proposalId] = [];
+  }
+}
+
+function formatAddress(address?: string | null): string {
+  if (!address) {
+    return 'Unknown';
+  }
+  if (address.length <= 10) {
+    return address;
+  }
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
+function formatRoleName(roleName?: string | null): string {
+  if (!roleName) {
+    return 'Role';
+  }
+
+  return roleName
+    .split('_')
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(' ');
+}

@@ -112,6 +112,8 @@ export function TreasuryBalance({
     return null;
   }
 
+  const chainLabel = data.chainDisplayName || 'Aptos';
+
   return (
     <Card>
       <CardHeader>
@@ -120,12 +122,14 @@ export function TreasuryBalance({
           Treasury Balance
         </CardTitle>
         <CardDescription>
-          Current vault balance from blockchain
-          {showCoinType && data.coinType && (
-            <Badge variant="outline" className="ml-2">
-              {data.coinType.split('::').pop()}
-            </Badge>
-          )}
+          {/* Plan A: Aptos-only but layout is chain-aware */}
+          <span> Current vault balance on {chainLabel}</span>
+          <div className="flex flex-wrap gap-2 mt-2">
+            <Badge variant="outline">{chainLabel}</Badge>
+            {showCoinType && data.coinType && (
+              <Badge variant="secondary">{data.coinType.split('::').pop()}</Badge>
+            )}
+          </div>
         </CardDescription>
       </CardHeader>
       <CardContent>

@@ -14,6 +14,7 @@ export type { RequestOptions } from './client';
 // Re-export treasury API
 export {
   getTreasuryBalance,
+  getTreasuryOverview,
   getTreasuryTransactions,
   getTreasuryStats,
   getReimbursements,
@@ -30,6 +31,8 @@ export {
   getRoles,
   getMembers,
   getGovernanceStats,
+  getCrossChainProposals,
+  getProposalWithChainActions,
 } from './governance';
 
 // Re-export proposals API

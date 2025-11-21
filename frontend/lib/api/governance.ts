@@ -4,6 +4,10 @@ import {
   getRoles as getRolesFromChain,
 } from './aptos';
 import {
+  getProposals as fetchProposals,
+  getProposalDetails as fetchProposalDetails,
+} from './proposals';
+import {
   ApiResponse,
   Election,
   ElectionDetails,
@@ -11,8 +15,17 @@ import {
   Member,
   TransactionSubmission,
   ElectionFilters,
+  ProposalFilters,
   Pagination,
+  Proposal,
+  ProposalDetails as ProposalDetailsType,
+  ChainAction,
+  ProposalWithChainActions,
 } from '../types/api';
+import { DEFAULT_CHAIN_ID } from '../chains';
+import { apiClient } from './client';
+
+const PLAN_A_CHAIN_ID = DEFAULT_CHAIN_ID;
 
 /**
  * Governance API module
@@ -229,6 +242,158 @@ export async function getGovernanceStats(): Promise<ApiResponse<GovernanceStats>
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to fetch governance stats',
+    };
+  }
+}
+
+async function fetchProposalActionsFromBackend(
+  proposalIds: number[]
+): Promise<Record<number, ChainAction[]>> {
+  if (proposalIds.length === 0) {
+    return {};
+  }
+
+  try {
+    const response = await apiClient.get<{
+      actions: Record<string, ChainAction[]>;
+    }>('/api/proposals/actions', {
+      params: {
+        ids: proposalIds.join(','),
+      },
+    });
+
+    if (response.success && response.data?.actions) {
+      const map: Record<number, ChainAction[]> = {};
+      Object.entries(response.data.actions).forEach(([key, value]) => {
+        map[Number(key)] = value;
+      });
+      return map;
+    }
+  } catch (error) {
+    console.error('Failed to fetch proposal actions from backend', error);
+  }
+
+  return {};
+}
+
+/**
+ * Cross-chain aware proposal list (Plan A: Aptos-only).
+ */
+export async function getCrossChainProposals(
+  filters?: ProposalFilters
+): Promise<
+  ApiResponse<{
+    proposals: ProposalWithChainActions[];
+    pagination: Pagination;
+  }>
+> {
+  try {
+    const baseResponse = await fetchProposals({
+      page: filters?.page,
+      limit: filters?.limit,
+      status: filters?.status,
+      creator: filters?.creator,
+    });
+
+    if (!baseResponse.success || !baseResponse.data) {
+      return {
+        success: false,
+        error: baseResponse.error || 'Failed to fetch cross-chain proposals',
+      };
+    }
+
+    const chainActionsMap = await fetchProposalActionsFromBackend(
+      baseResponse.data.proposals.map((proposal: Proposal) => proposal.proposal_id)
+    );
+
+    const proposalsWithActions: ProposalWithChainActions[] = baseResponse.data.proposals.map(
+      (proposal: Proposal) => ({
+        ...proposal,
+        chainIds: proposal.chainIds?.length
+          ? proposal.chainIds
+          : [proposal.chainId ?? PLAN_A_CHAIN_ID],
+        actions: chainActionsMap[proposal.proposal_id] || [],
+      })
+    );
+
+    return {
+      success: true,
+      data: {
+        proposals: proposalsWithActions,
+        pagination: baseResponse.data.pagination,
+      },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch cross-chain proposals',
+    };
+  }
+}
+
+/**
+ * Fetch a single proposal with inferred chain actions.
+ */
+export async function getProposalWithChainActions(
+  proposalId: number
+): Promise<ApiResponse<ProposalWithChainActions>> {
+  try {
+    const [listResponse, detailsResponse] = await Promise.all([
+      fetchProposals({ limit: 1000, page: 1 }),
+      fetchProposalDetails(proposalId),
+    ]);
+
+    if (!listResponse.success || !listResponse.data) {
+      return {
+        success: false,
+        error: listResponse.error || 'Failed to fetch proposals',
+      };
+    }
+
+    const proposal = listResponse.data.proposals.find(
+      (p: Proposal) => p.proposal_id === proposalId
+    );
+
+    if (!proposal) {
+      return {
+        success: false,
+        error: 'Proposal not found',
+      };
+    }
+
+    const actionsMap = await fetchProposalActionsFromBackend([proposalId]);
+    const actions = actionsMap[proposalId] || [];
+
+    const base: ProposalWithChainActions = {
+      ...proposal,
+      chainIds: proposal.chainIds?.length
+        ? proposal.chainIds
+        : [proposal.chainId ?? PLAN_A_CHAIN_ID],
+      actions,
+    };
+
+    if (detailsResponse.success && detailsResponse.data) {
+      const details = detailsResponse.data as ProposalDetailsType;
+      return {
+        success: true,
+        data: {
+          ...base,
+          votes: details.votes,
+          yay_votes: details.yay_votes,
+          nay_votes: details.nay_votes,
+          voteStats: details.voteStats,
+        },
+      };
+    }
+
+    return {
+      success: true,
+      data: base,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch proposal',
     };
   }
 }

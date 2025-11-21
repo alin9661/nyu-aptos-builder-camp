@@ -15,6 +15,7 @@ import { verifyAuth, requireLeadership, AuthenticatedRequest } from '../middlewa
 // } from '../services/ipfs';
 
 const router = Router();
+const PLAN_A_CHAIN_ID = 'aptos';
 
 // Configure multer for file uploads (memory storage)
 const upload = multer({
@@ -61,6 +62,7 @@ router.get('/balance', async (_req: Request, res: Response) => {
     return res.json({
       success: true,
       data: {
+        chainId: PLAN_A_CHAIN_ID,
         balance: balanceAmount.toString(),
         balanceFormatted: formatCoinAmount(balanceAmount),
         coinType: COIN_TYPE,
@@ -108,6 +110,7 @@ router.get('/transactions', validateQuery(paginationSchema), async (req: Request
       data: {
         transactions: transactions.map(tx => ({
           ...tx,
+          chainId: PLAN_A_CHAIN_ID,
           amount: tx.amount.toString(),
           totalBalance: tx.total_balance.toString(),
           amountFormatted: formatCoinAmount(tx.amount),
@@ -160,6 +163,7 @@ router.get('/stats', async (_req: Request, res: Response) => {
     return res.json({
       success: true,
       data: {
+        chainId: PLAN_A_CHAIN_ID,
         deposits: {
           sponsorTotal: stats[0].sponsor_total.toString(),
           merchTotal: stats[0].merch_total.toString(),
@@ -266,6 +270,7 @@ router.get('/reimbursements', validateQuery(paginationSchema), async (req: Reque
       data: {
         requests: requests.map(req => ({
           ...req,
+          chainId: PLAN_A_CHAIN_ID,
           amount: req.amount.toString(),
           amountFormatted: formatCoinAmount(req.amount),
         })),
@@ -333,6 +338,7 @@ router.get('/reimbursements/:id', async (req: Request, res: Response) => {
       success: true,
       data: {
         ...request,
+        chainId: PLAN_A_CHAIN_ID,
         amount: request.amount.toString(),
         amountFormatted: formatCoinAmount(request.amount),
         approvals,
