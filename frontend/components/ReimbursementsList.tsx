@@ -16,7 +16,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { FileText, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
-import { useServerEvents } from '@/hooks/useServerEvents';
 
 interface ReimbursementsListProps {
   pageSize?: number;
@@ -33,23 +32,6 @@ export function ReimbursementsList({
     page,
     limit: pageSize,
     sort: 'desc',
-  });
-
-  // Real-time updates via SSE
-  useServerEvents({
-    channels: [
-      'reimbursements:new',
-      'reimbursements:approved',
-      'reimbursements:paid',
-    ],
-    enabled: true,
-    onEvent: (event) => {
-      console.log('Reimbursement update received:', event.channel);
-      refetch();
-    },
-    onError: (error) => {
-      console.error('SSE connection error:', error);
-    },
   });
 
   if (loading && !data) {
