@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useProposals } from '@/hooks/useProposals';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -30,13 +30,17 @@ export function ProposalsList({
   filterCreator,
 }: ProposalsListProps) {
   const [page, setPage] = useState(1);
-  const { data, loading, error, refetch } = useProposals({
+
+  // Stabilize filters object to prevent infinite re-renders
+  const proposalFilters = useMemo(() => ({
     page,
     limit: pageSize,
-    sort: 'desc',
+    sort: 'desc' as const,
     status: filterStatus,
     creator: filterCreator,
-  });
+  }), [page, pageSize, filterStatus, filterCreator]);
+
+  const { data, loading, error, refetch } = useProposals(proposalFilters);
 
   const getStatusVariant = (statusName: string) => {
     switch (statusName.toLowerCase()) {
