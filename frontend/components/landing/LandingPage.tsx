@@ -15,7 +15,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto space-y-8 text-center">
           <Badge variant="outline" className="gap-2">
             <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-sm font-medium">Live on Aptos Mainnet</span>
+            <span className="text-sm font-medium">Live on Aptos Testnet</span>
           </Badge>
 
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight">

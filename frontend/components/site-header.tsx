@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/dashboard' },
   { label: 'Organizations', href: '/organizations' },
-  { label: 'Features', href: '/features' },
+  { label: 'Treasury', href: '/treasury' },
   { label: 'Governance', href: '/governance' },
   { label: 'History', href: '/history' },
   { label: 'Settings', href: '/settings' },
