@@ -1,7 +1,6 @@
 import { aptos, EVENT_TYPES } from '../config/aptos';
 import { query, transaction } from '../config/database';
 import { logger } from '../utils/logger';
-import { getEventService } from './events';
 
 // Indexer state
 interface IndexerState {
@@ -188,20 +187,6 @@ class TreasuryIndexer extends EventIndexer {
           );
         });
 
-        // Emit SSE event
-        try {
-          const eventService = getEventService();
-          eventService.emitTreasuryDeposit({
-            source: Buffer.from(data.source).toString('utf-8'),
-            amount: data.amount,
-            totalBalance: data.total_balance,
-            transactionHash: eventAny.transaction_hash || eventAny.indexed_at_transaction_hash,
-            timestamp: new Date().toISOString(),
-          });
-        } catch (error) {
-          logger.debug('WebSocket service not available for deposit event');
-        }
-
         logger.debug('Indexed deposit event', { version: eventAny.transaction_version });
       }
     } catch (error) {
@@ -267,22 +252,6 @@ class TreasuryIndexer extends EventIndexer {
             ]
           );
         });
-
-        // Emit WebSocket event
-        try {
-          const eventService = getEventService();
-          eventService.emitReimbursementNew({
-            id: data.id,
-            payer: data.payer,
-            payee: data.payee,
-            amount: data.amount,
-            invoiceUri: Buffer.from(data.invoice_uri).toString('utf-8'),
-            transactionHash: eventAny.transaction_hash || eventAny.indexed_at_transaction_hash,
-            timestamp: new Date().toISOString(),
-          });
-        } catch (error) {
-          logger.debug('WebSocket service not available for reimbursement submitted event');
-        }
 
         logger.debug('Indexed reimbursement submitted event', { id: data.id });
       }
@@ -355,30 +324,6 @@ class TreasuryIndexer extends EventIndexer {
              WHERE id = $1`,
             [data.id]
           );
-
-          // Emit WebSocket event
-          try {
-            const eventService = getEventService();
-            const approvalStatus = statusResult.rows[0];
-            eventService.emitReimbursementApproved({
-              id: data.id,
-              approver: data.approver,
-              role,
-              approved: {
-                advisor: approvalStatus.approved_advisor || false,
-                president: approvalStatus.approved_president || false,
-                vice: approvalStatus.approved_vice || false,
-              },
-              fullyApproved:
-                approvalStatus.approved_advisor &&
-                approvalStatus.approved_president &&
-                approvalStatus.approved_vice,
-              transactionHash: eventAny.transaction_hash || eventAny.indexed_at_transaction_hash,
-              timestamp: new Date().toISOString(),
-            });
-          } catch (error) {
-            logger.debug('WebSocket service not available for reimbursement approval event');
-          }
         });
 
         logger.debug('Indexed reimbursement approval', { id: data.id, role });
@@ -435,20 +380,6 @@ class TreasuryIndexer extends EventIndexer {
             ]
           );
         });
-
-        // Emit WebSocket event
-        try {
-          const eventService = getEventService();
-          eventService.emitReimbursementPaid({
-            id: data.id,
-            payee: data.payee,
-            amount: data.amount,
-            transactionHash: eventAny.transaction_hash || eventAny.indexed_at_transaction_hash,
-            timestamp: new Date().toISOString(),
-          });
-        } catch (error) {
-          logger.debug('WebSocket service not available for reimbursement payment event');
-        }
 
         logger.debug('Indexed reimbursement payment', { id: data.id });
       }
@@ -596,21 +527,6 @@ class GovernanceIndexer extends EventIndexer {
           );
         });
 
-        // Emit WebSocket event
-        try {
-          const eventService = getEventService();
-          eventService.emitElectionVote({
-            electionId: data.election_id,
-            roleName: Buffer.from(data.role_name).toString('utf-8'),
-            voter: data.voter,
-            candidate: data.candidate,
-            weight: data.weight,
-            timestamp: new Date().toISOString(),
-          });
-        } catch (error) {
-          logger.debug('WebSocket service not available for election vote event');
-        }
-
         logger.debug('Indexed governance vote', { election_id: data.election_id });
       }
     } catch (error) {
@@ -660,21 +576,6 @@ class GovernanceIndexer extends EventIndexer {
              WHERE election_id = $1 AND role_name = $2`,
             [data.election_id, Buffer.from(data.role_name).toString('utf-8')]
           );
-
-          // Emit WebSocket event
-          try {
-            const eventService = getEventService();
-            eventService.emitElectionFinalized({
-              electionId: data.election_id,
-              roleName: Buffer.from(data.role_name).toString('utf-8'),
-              winner: data.winner?.vec?.[0] || null,
-              isTie: data.is_tie,
-              totalVotes: parseInt(voteCountResult.rows[0].total_votes),
-              timestamp: new Date().toISOString(),
-            });
-          } catch (error) {
-            logger.debug('WebSocket service not available for election finalized event');
-          }
         });
 
         logger.debug('Indexed election finalized', { election_id: data.election_id });
@@ -762,23 +663,6 @@ class ProposalsIndexer extends EventIndexer {
           );
         });
 
-        // Emit WebSocket event
-        try {
-          const eventService = getEventService();
-          eventService.emitProposalNew({
-            proposalId: data.proposal_id,
-            creator: data.creator,
-            title: Buffer.from(data.title).toString('utf-8'),
-            description: '', // Description not in event
-            startTs: data.start_ts,
-            endTs: data.end_ts,
-            transactionHash: eventAny.transaction_hash || eventAny.indexed_at_transaction_hash,
-            timestamp: new Date().toISOString(),
-          });
-        } catch (error) {
-          logger.debug('WebSocket service not available for proposal created event');
-        }
-
         logger.debug('Indexed proposal created', { proposal_id: data.proposal_id });
       }
     } catch (error) {
@@ -836,23 +720,6 @@ class ProposalsIndexer extends EventIndexer {
             `SELECT yay_votes, nay_votes FROM proposals WHERE proposal_id = $1`,
             [data.proposal_id]
           );
-
-          // Emit WebSocket event
-          try {
-            const eventService = getEventService();
-            const voteCounts = voteCountResult.rows[0];
-            eventService.emitProposalVote({
-              proposalId: data.proposal_id,
-              voter: data.voter,
-              vote: data.vote,
-              weight: data.weight,
-              yayVotes: voteCounts.yay_votes,
-              nayVotes: voteCounts.nay_votes,
-              timestamp: new Date().toISOString(),
-            });
-          } catch (error) {
-            logger.debug('WebSocket service not available for proposal vote event');
-          }
         });
 
         logger.debug('Indexed proposal vote', { proposal_id: data.proposal_id });
@@ -893,21 +760,6 @@ class ProposalsIndexer extends EventIndexer {
             [data.status, data.yay_votes, data.nay_votes, data.proposal_id]
           );
         });
-
-        // Emit WebSocket event
-        try {
-          const eventService = getEventService();
-          eventService.emitProposalFinalized({
-            proposalId: data.proposal_id,
-            status: data.status,
-            yayVotes: data.yay_votes,
-            nayVotes: data.nay_votes,
-            passed: data.status === 2 || data.status === 4, // 2=Approved, 4=Executed
-            timestamp: new Date().toISOString(),
-          });
-        } catch (error) {
-          logger.debug('WebSocket service not available for proposal finalized event');
-        }
 
         logger.debug('Indexed proposal finalized', { proposal_id: data.proposal_id });
       }

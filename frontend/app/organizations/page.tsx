@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { SiteHeader } from '@/components/site-header';
 import { OrganizationsList } from '@/components/OrganizationsList';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/lib/auth/AuthContext';
@@ -19,7 +18,6 @@ export default function OrganizationsPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <SiteHeader />
       <main className="flex-1 p-6 lg:p-8">
         <div className="mx-auto max-w-7xl space-y-8">
 

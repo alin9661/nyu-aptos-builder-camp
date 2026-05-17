@@ -6,7 +6,6 @@ import { TreasuryBalance } from '@/components/TreasuryBalance'
 import { ReimbursementsList } from '@/components/ReimbursementsList'
 import { ElectionsList } from '@/components/ElectionsList'
 import { ProposalsList } from '@/components/ProposalsList'
-import { SiteHeader } from '@/components/site-header'
 import { WalletSetupBanner, CreateWalletCard } from '@/components/wallet'
 import { useAuth } from '@/lib/auth/AuthContext'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -28,7 +27,6 @@ export default function Page() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <SiteHeader />
       <main className="flex-1 p-6 lg:p-8">
         <div className="mx-auto max-w-7xl space-y-8">
           

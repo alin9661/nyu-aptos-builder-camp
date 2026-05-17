@@ -12,39 +12,23 @@ import {
 import { cn } from '@/lib/utils';
 import { useRelativeTime } from '@/lib/utils/dateFormat';
 import { useNotifications, useUnreadCount } from '@/hooks/useNotifications';
-import { useServerEvents } from '@/hooks/useServerEvents';
+import { useAuth } from '@/lib/auth/AuthContext';
 import { Notification, NotificationCategory } from '@/lib/types/api';
 
 /**
  * Notification Bell Icon with Dropdown
- * Now connected to backend API
+ * Connected to backend API with auto-refresh polling.
+ * Renders nothing for unauthenticated visitors so polling never fires 401s.
  */
 export function NotificationCenter() {
-  const { data, loading, markAsRead, markAllAsRead, deleteNotification, refetch } =
-    useNotifications({ limit: 10 }, true, 15000); // Auto-refresh every 15s
-  const { data: unreadCount, refetch: refetchUnreadCount } = useUnreadCount(true, 10000); // Refresh count every 10s
+  const { user } = useAuth();
+  const authenticated = Boolean(user);
 
-  // Real-time notifications via SSE
-  useServerEvents({
-    channels: [
-      'reimbursements:new',
-      'reimbursements:approved',
-      'reimbursements:paid',
-      'proposals:new',
-      'proposals:vote',
-      'proposals:finalized',
-      'elections:vote',
-      'elections:finalized',
-      'treasury:deposit',
-    ],
-    enabled: true,
-    onEvent: (event) => {
-      console.log('Notification event received:', event.channel);
-      // Refetch notifications and count when events occur
-      refetch();
-      refetchUnreadCount();
-    },
-  });
+  const { data, loading, markAsRead, markAllAsRead, deleteNotification, refetch } =
+    useNotifications({ limit: 10 }, authenticated, 15000);
+  const { data: unreadCount, refetch: refetchUnreadCount } = useUnreadCount(authenticated, 10000);
+
+  if (!authenticated) return null;
 
   const notifications = data?.notifications || [];
 

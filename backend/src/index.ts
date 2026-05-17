@@ -5,7 +5,6 @@ import dotenv from 'dotenv';
 import { logger } from './utils/logger';
 import { testConnection, closePool } from './config/database';
 import { getNetworkInfo } from './config/aptos';
-import { initializeEventService, getEventService } from './services/events';
 
 // Import routes
 import authRoutes from './routes/auth';
@@ -13,7 +12,6 @@ import treasuryRoutes from './routes/treasury';
 import governanceRoutes from './routes/governance';
 import proposalsRoutes from './routes/proposals';
 import webhookRoutes from './routes/webhook';
-import eventsRoutes from './routes/events';
 
 // Load environment variables
 dotenv.config();
@@ -65,29 +63,12 @@ app.get('/health', async (_req: Request, res: Response) => {
     const dbHealthy = await testConnection();
     const networkInfo = getNetworkInfo();
 
-    // Get Event service metrics if initialized
-    let eventMetrics = null;
-    try {
-      const eventService = getEventService();
-      eventMetrics = eventService.getMetrics();
-    } catch {
-      // Event service not yet initialized
-    }
-
     return res.json({
       status: 'ok',
       timestamp: new Date().toISOString(),
       environment: NODE_ENV,
       database: dbHealthy ? 'connected' : 'disconnected',
       network: networkInfo,
-      events: eventMetrics ? {
-        connected: true,
-        activeConnections: eventMetrics.activeConnections,
-        totalConnections: eventMetrics.totalConnections,
-        totalEvents: eventMetrics.totalEvents,
-      } : {
-        connected: false,
-      },
       version: process.env.npm_package_version || '1.0.0',
     });
   } catch (error) {
@@ -104,7 +85,6 @@ app.use('/api/auth/webhook', webhookRoutes);
 app.use('/api/treasury', treasuryRoutes);
 app.use('/api/governance', governanceRoutes);
 app.use('/api/proposals', proposalsRoutes);
-app.use('/api/events', eventsRoutes);
 
 // Root endpoint
 app.get('/', (_req: Request, res: Response) => {
@@ -114,12 +94,6 @@ app.get('/', (_req: Request, res: Response) => {
     description: 'Backend API for governance and treasury management platform',
     endpoints: {
       health: '/health',
-      events: {
-        stream: 'GET /api/events/stream?channels=treasury:deposit,proposals:new',
-        poll: 'GET /api/events/poll?channels=treasury:deposit&since=123456',
-        metrics: 'GET /api/events/metrics',
-        channels: 'GET /api/events/channels',
-      },
       auth: {
         nonce: 'POST /api/auth/nonce',
         login: 'POST /api/auth/login',
@@ -217,7 +191,6 @@ app.use((req: Request, res: Response) => {
       treasury: '/api/treasury/*',
       governance: '/api/governance/*',
       proposals: '/api/proposals/*',
-      events: '/api/events/*',
       health: '/health',
       docs: '/ (API documentation)',
     },
@@ -249,17 +222,12 @@ const startServer = async () => {
       process.exit(1);
     }
 
-    // Initialize Event service (SSE)
-    const eventService = initializeEventService();
-    logger.info('Event service (SSE) initialized');
-
     // Start HTTP server
     app.listen(PORT, () => {
       logger.info(`Server started`, {
         port: PORT,
         environment: NODE_ENV,
         network: getNetworkInfo().network,
-        events: 'SSE enabled',
       });
     });
 
@@ -272,9 +240,6 @@ const startServer = async () => {
         logger.error('Forced shutdown after timeout');
         process.exit(1);
       }, 10000);
-
-      // Shutdown Event service first
-      await eventService.shutdown();
 
       // Close database pool
       await closePool();

@@ -171,7 +171,11 @@ export function useTreasuryStats(autoRefresh = false, refreshInterval = 60000) {
 /**
  * Hook for fetching reimbursement requests
  */
-export function useReimbursements(params?: PaginationParams) {
+export function useReimbursements(
+  params?: PaginationParams,
+  autoRefresh = false,
+  refreshInterval = 30000,
+) {
   const [state, setState] = useState<
     UseDataState<{ requests: ReimbursementRequest[]; pagination: Pagination }>
   >({
@@ -209,8 +213,12 @@ export function useReimbursements(params?: PaginationParams) {
 
   useEffect(() => {
     fetchReimbursements();
+    if (autoRefresh) {
+      const interval = setInterval(fetchReimbursements, refreshInterval);
+      return () => clearInterval(interval);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [autoRefresh, refreshInterval]);
 
   return { ...state, refetch: fetchReimbursements };
 }

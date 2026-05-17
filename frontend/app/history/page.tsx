@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { SiteHeader } from '@/components/site-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -148,7 +147,6 @@ export default function HistoryPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <SiteHeader />
       <main className="flex-1 p-6 lg:p-8">
         <div className="mx-auto max-w-7xl space-y-8">
           <div className="flex items-center justify-between">
