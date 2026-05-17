@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { ArrowRight, Shield, Users, Wallet } from 'lucide-react';
-import NavBar from './NavBar';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,8 +9,6 @@ import { Badge } from '@/components/ui/badge';
 export default function LandingPage() {
   return (
     <div className="relative min-h-screen w-full bg-background text-foreground">
-      {/* Navigation */}
-      <NavBar />
 
       {/* Hero Section */}
       <main className="flex flex-col items-center justify-center min-h-screen p-6 lg:p-8">
