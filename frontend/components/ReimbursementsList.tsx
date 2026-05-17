@@ -28,11 +28,15 @@ export function ReimbursementsList({
 }: ReimbursementsListProps) {
   const router = useRouter();
   const [page, setPage] = useState(1);
-  const { data, loading, error, refetch } = useReimbursements({
-    page,
-    limit: pageSize,
-    sort: 'desc',
-  });
+  const { data, loading, error, refetch } = useReimbursements(
+    {
+      page,
+      limit: pageSize,
+      sort: 'desc',
+    },
+    true,
+    30000,
+  );
 
   if (loading && !data) {
     return (
