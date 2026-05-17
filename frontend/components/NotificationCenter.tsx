@@ -12,16 +12,23 @@ import {
 import { cn } from '@/lib/utils';
 import { useRelativeTime } from '@/lib/utils/dateFormat';
 import { useNotifications, useUnreadCount } from '@/hooks/useNotifications';
+import { useAuth } from '@/lib/auth/AuthContext';
 import { Notification, NotificationCategory } from '@/lib/types/api';
 
 /**
  * Notification Bell Icon with Dropdown
- * Now connected to backend API with auto-refresh polling
+ * Connected to backend API with auto-refresh polling.
+ * Renders nothing for unauthenticated visitors so polling never fires 401s.
  */
 export function NotificationCenter() {
+  const { user } = useAuth();
+  const authenticated = Boolean(user);
+
   const { data, loading, markAsRead, markAllAsRead, deleteNotification, refetch } =
-    useNotifications({ limit: 10 }, true, 15000); // Auto-refresh every 15s
-  const { data: unreadCount, refetch: refetchUnreadCount } = useUnreadCount(true, 10000); // Refresh count every 10s
+    useNotifications({ limit: 10 }, authenticated, 15000);
+  const { data: unreadCount, refetch: refetchUnreadCount } = useUnreadCount(authenticated, 10000);
+
+  if (!authenticated) return null;
 
   const notifications = data?.notifications || [];
 
