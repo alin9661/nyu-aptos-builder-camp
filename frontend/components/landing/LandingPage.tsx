@@ -6,6 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
+const NETWORK_LABEL = (() => {
+  const raw = (process.env.NEXT_PUBLIC_APTOS_NETWORK || 'testnet').toLowerCase();
+  return raw.charAt(0).toUpperCase() + raw.slice(1);
+})();
+
 export default function LandingPage() {
   return (
     <div className="relative min-h-screen w-full bg-background text-foreground">
@@ -15,7 +20,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto space-y-8 text-center">
           <Badge variant="outline" className="gap-2">
             <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-sm font-medium">Live on Aptos Testnet</span>
+            <span className="text-sm font-medium">Live on Aptos {NETWORK_LABEL}</span>
           </Badge>
 
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
