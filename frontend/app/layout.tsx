@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { Toaster } from '@/components/ui/toast'
-import { SiteHeader } from '@/components/site-header'
+import { ConditionalSiteHeader } from '@/components/ConditionalSiteHeader'
 import { Providers } from './providers'
 import './globals.css'
 
@@ -29,7 +29,7 @@ export default function RootLayout({
       <body className={`font-sans antialiased`}>
         <ErrorBoundary>
           <Providers>
-            <SiteHeader />
+            <ConditionalSiteHeader />
             {children}
           </Providers>
         </ErrorBoundary>
