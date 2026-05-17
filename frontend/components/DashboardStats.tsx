@@ -15,42 +15,14 @@ import {
 } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Wallet, FileText, Vote, Users } from 'lucide-react';
-import { useServerEvents } from '@/hooks/useServerEvents';
 
 export function DashboardStats() {
-  const { data: balance, loading: balanceLoading, refetch: refetchBalance } = useTreasuryBalance(true);
-  const { data: treasuryStats, loading: treasuryLoading, refetch: refetchTreasuryStats } = useTreasuryStats(true);
-  const { data: proposalStats, loading: proposalLoading, refetch: refetchProposalStats } = useProposalStats(true);
-  const { data: governanceStats, loading: governanceLoading, refetch: refetchGovernanceStats } = useGovernanceStats(true);
+  const { data: balance, loading: balanceLoading } = useTreasuryBalance(true);
+  const { data: treasuryStats, loading: treasuryLoading } = useTreasuryStats(true);
+  const { data: proposalStats, loading: proposalLoading } = useProposalStats(true);
+  const { data: governanceStats, loading: governanceLoading } = useGovernanceStats(true);
 
   const loading = balanceLoading || treasuryLoading || proposalLoading || governanceLoading;
-
-  // Real-time updates via SSE
-  useServerEvents({
-    channels: [
-      'treasury:balance',
-      'treasury:deposit',
-      'reimbursements:new',
-      'reimbursements:approved',
-      'reimbursements:paid',
-      'proposals:new',
-      'proposals:vote',
-      'proposals:finalized',
-      'elections:vote',
-      'elections:finalized',
-    ],
-    enabled: true,
-    onEvent: (event) => {
-      console.log('Dashboard stats update received:', event.channel);
-      refetchBalance();
-      refetchTreasuryStats();
-      refetchProposalStats();
-      refetchGovernanceStats();
-    },
-    onError: (error) => {
-      console.error('SSE connection error:', error);
-    },
-  });
 
   if (loading) {
     return (
