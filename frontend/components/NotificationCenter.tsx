@@ -12,39 +12,16 @@ import {
 import { cn } from '@/lib/utils';
 import { useRelativeTime } from '@/lib/utils/dateFormat';
 import { useNotifications, useUnreadCount } from '@/hooks/useNotifications';
-import { useServerEvents } from '@/hooks/useServerEvents';
 import { Notification, NotificationCategory } from '@/lib/types/api';
 
 /**
  * Notification Bell Icon with Dropdown
- * Now connected to backend API
+ * Now connected to backend API with auto-refresh polling
  */
 export function NotificationCenter() {
   const { data, loading, markAsRead, markAllAsRead, deleteNotification, refetch } =
     useNotifications({ limit: 10 }, true, 15000); // Auto-refresh every 15s
   const { data: unreadCount, refetch: refetchUnreadCount } = useUnreadCount(true, 10000); // Refresh count every 10s
-
-  // Real-time notifications via SSE
-  useServerEvents({
-    channels: [
-      'reimbursements:new',
-      'reimbursements:approved',
-      'reimbursements:paid',
-      'proposals:new',
-      'proposals:vote',
-      'proposals:finalized',
-      'elections:vote',
-      'elections:finalized',
-      'treasury:deposit',
-    ],
-    enabled: true,
-    onEvent: (event) => {
-      console.log('Notification event received:', event.channel);
-      // Refetch notifications and count when events occur
-      refetch();
-      refetchUnreadCount();
-    },
-  });
 
   const notifications = data?.notifications || [];
 
