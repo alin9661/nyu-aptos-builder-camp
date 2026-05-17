@@ -6,7 +6,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Wallet } from 'lucide-react';
 import { useFormattedDateTime } from '@/lib/utils/dateFormat';
-import { useServerEvents } from '@/hooks/useServerEvents';
 
 interface TreasuryBalanceProps {
   autoRefresh?: boolean;
@@ -21,19 +20,6 @@ export function TreasuryBalance({
 }: TreasuryBalanceProps) {
   const { data, loading, error, refetch } = useTreasuryBalance(autoRefresh, refreshInterval);
   const formattedTimestamp = useFormattedDateTime(data?.timestamp || new Date());
-
-  // Real-time updates via SSE
-  useServerEvents({
-    channels: ['treasury:balance', 'treasury:deposit'],
-    enabled: true,
-    onEvent: (event) => {
-      console.log('Treasury balance update received:', event.channel);
-      refetch();
-    },
-    onError: (error) => {
-      console.error('SSE connection error:', error);
-    },
-  });
 
   if (loading && !data) {
     return (
