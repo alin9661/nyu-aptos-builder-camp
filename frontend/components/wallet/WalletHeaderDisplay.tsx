@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatAddress, formatBalance, getExplorerUrl } from '@/lib/api/wallet';
+import { getCoinSymbol } from '@/lib/api/aptos';
 import { AptosWallet } from '@/lib/auth/AuthContext';
 import { cn } from '@/lib/utils';
 
@@ -82,7 +83,7 @@ export function WalletHeaderDisplay({
               <span className="text-lg font-bold">
                 {formatBalance(wallet.balance || '0')}
               </span>
-              <span className="text-xs text-muted-foreground">APT</span>
+              <span className="text-xs text-muted-foreground">{getCoinSymbol()}</span>
             </div>
           </div>
 
@@ -176,7 +177,7 @@ export function WalletHeaderDisplayCompact({
               <span className="text-base font-bold">
                 {formatBalance(wallet.balance || '0')}
               </span>
-              <span className="text-xs text-muted-foreground">APT</span>
+              <span className="text-xs text-muted-foreground">{getCoinSymbol()}</span>
             </div>
           </div>
         </div>

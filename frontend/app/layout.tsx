@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { Toaster } from '@/components/ui/toast'
+import { ConditionalSiteHeader } from '@/components/ConditionalSiteHeader'
 import { Providers } from './providers'
 import './globals.css'
 
@@ -24,10 +25,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`font-sans antialiased`}>
         <ErrorBoundary>
           <Providers>
+            <ConditionalSiteHeader />
             {children}
           </Providers>
         </ErrorBoundary>

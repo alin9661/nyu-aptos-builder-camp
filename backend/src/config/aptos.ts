@@ -33,6 +33,21 @@ export const MODULES = {
 
 // Coin type for treasury (e.g., USDC on testnet)
 export const COIN_TYPE = process.env.COIN_TYPE || '0x1::aptos_coin::AptosCoin';
+export const COIN_DECIMALS = parseInt(process.env.COIN_DECIMALS || '8', 10);
+export const COIN_SYMBOL = process.env.COIN_SYMBOL || 'APT';
+
+// Helper function to get coin symbol from coin type
+export const getCoinSymbol = (): string => {
+  if (COIN_SYMBOL !== 'APT') {
+    return COIN_SYMBOL;
+  }
+
+  // Auto-detect from coin type if symbol not explicitly set
+  if (COIN_TYPE.includes('USDC')) return 'USDC';
+  if (COIN_TYPE.includes('USDT')) return 'USDT';
+  if (COIN_TYPE.includes('AptosCoin')) return 'APT';
+  return 'TOKEN';
+};
 
 // Network info
 export const getNetworkInfo = () => ({
@@ -41,10 +56,12 @@ export const getNetworkInfo = () => ({
   indexerUrl: INDEXER_URL || config.indexer,
   moduleAddress: MODULE_ADDRESS,
   coinType: COIN_TYPE,
+  coinDecimals: COIN_DECIMALS,
+  coinSymbol: getCoinSymbol(),
 });
 
 // Helper to format coin amount (from on-chain to human-readable)
-export const formatCoinAmount = (amount: bigint | number, decimals = 8): string => {
+export const formatCoinAmount = (amount: bigint | number, decimals = COIN_DECIMALS): string => {
   const amountBigInt = BigInt(amount);
   const divisor = BigInt(10 ** decimals);
   const integerPart = amountBigInt / divisor;
@@ -59,7 +76,7 @@ export const formatCoinAmount = (amount: bigint | number, decimals = 8): string 
 };
 
 // Helper to parse coin amount (from human-readable to on-chain)
-export const parseCoinAmount = (amount: string, decimals = 8): bigint => {
+export const parseCoinAmount = (amount: string, decimals = COIN_DECIMALS): bigint => {
   const [integerPart, fractionalPart = ''] = amount.split('.');
   const fractionalPadded = fractionalPart.padEnd(decimals, '0').slice(0, decimals);
   const combined = integerPart + fractionalPadded;

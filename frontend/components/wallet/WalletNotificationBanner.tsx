@@ -22,6 +22,9 @@ export function WalletNotificationBanner({
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    // Ensure we're on the client before accessing localStorage
+    if (typeof window === 'undefined') return;
+
     // Check if banner was previously dismissed
     const dismissed = localStorage.getItem(STORAGE_KEY);
     if (!dismissed) {
@@ -30,7 +33,9 @@ export function WalletNotificationBanner({
   }, []);
 
   const handleDismiss = () => {
-    localStorage.setItem(STORAGE_KEY, 'true');
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY, 'true');
+    }
     setVisible(false);
   };
 
@@ -102,6 +107,9 @@ export function WalletNotificationBannerCompact({
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    // Ensure we're on the client before accessing localStorage
+    if (typeof window === 'undefined') return;
+
     const dismissed = localStorage.getItem(STORAGE_KEY);
     if (!dismissed) {
       setVisible(true);
@@ -109,7 +117,9 @@ export function WalletNotificationBannerCompact({
   }, []);
 
   const handleDismiss = () => {
-    localStorage.setItem(STORAGE_KEY, 'true');
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY, 'true');
+    }
     setVisible(false);
   };
 

@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
 import { AddressDisplay } from './AddressDisplay';
 import { formatBalance, getExplorerUrl, getWalletBalance } from '@/lib/api/wallet';
+import { getCoinSymbol } from '@/lib/api/aptos';
 import { AptosWallet } from '@/lib/auth/AuthContext';
 import { cn } from '@/lib/utils';
 
@@ -92,7 +93,7 @@ export function WalletDashboardCard({
               <span className="text-2xl font-bold">
                 {formatBalance(balance || '0')}
               </span>
-              <span className="text-sm text-muted-foreground">APT</span>
+              <span className="text-sm text-muted-foreground">{getCoinSymbol()}</span>
             </div>
           )}
         </div>

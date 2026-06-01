@@ -8,17 +8,15 @@ This platform provides an intuitive interface for students to:
 - Participate in governance proposals and voting
 - Manage treasury funds and reimbursements
 - Conduct campus-wide elections
-- Automatically generate Aptos wallets through NYU SSO
-- Authenticate with Google via Auth0
+- Connect using Aptos-compatible wallets (Petra, Pontem, Martian, etc.)
 
 ## Key Features
 
 ### Authentication & Identity
-- **NYU SSO Integration** - Seamless login with NYU NetID
-- **Auth0 Support** - Google Sign-In and social authentication
-- **Automatic Wallet Generation** - Ed25519 Aptos wallets created on first login
-- **Dual Authentication** - Support for both SSO and traditional wallet connection
-- **Secure Key Storage** - AES-256-GCM encryption for private keys
+- **Wallet-Based Authentication** - Connect with any AIP-62 compatible Aptos wallet
+- **Multi-Wallet Support** - Petra, Pontem, Martian, Nightly, and more
+- **Secure Connection** - Non-custodial wallet integration
+- **Role-Based Access Control** - Manage permissions via on-chain roles
 
 ### Governance
 - **Proposal System** - Create, vote on, and track governance proposals
@@ -243,8 +241,8 @@ cd frontend && vercel --prod
 
 **Environment Variables:**
 - Configure all production environment variables in deployment platform dashboards
-- Update Auth0 callback URLs with production URLs
 - Set CORS_ORIGIN to your Vercel frontend URL
+- Configure wallet adapter settings for production
 
 For complete deployment instructions, see [docs/setup/VERCEL_DEPLOYMENT.md](docs/setup/VERCEL_DEPLOYMENT.md).
 
@@ -288,7 +286,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - **NYU** - For supporting blockchain education
 - **Aptos Foundation** - For blockchain infrastructure
-- **Auth0** - For authentication services
+- **Aptos Labs** - For wallet adapter and SDKs
 - **Open Source Community** - For amazing tools and libraries
 
 ## Support

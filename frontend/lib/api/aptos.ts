@@ -9,9 +9,24 @@ import { Aptos, AptosConfig, Network } from '@aptos-labs/ts-sdk';
 const NETWORK = (process.env.NEXT_PUBLIC_APTOS_NETWORK as Network) || Network.TESTNET;
 const NODE_URL = process.env.NEXT_PUBLIC_APTOS_NODE_URL;
 export const MODULE_ADDRESS = process.env.NEXT_PUBLIC_MODULE_ADDRESS || '0xCAFE';
-export const COIN_TYPE = '0x1::aptos_coin::AptosCoin';
+export const COIN_TYPE = process.env.NEXT_PUBLIC_COIN_TYPE || '0x1::aptos_coin::AptosCoin';
+export const COIN_DECIMALS = parseInt(process.env.NEXT_PUBLIC_COIN_DECIMALS || '8', 10);
+export const COIN_SYMBOL = process.env.NEXT_PUBLIC_COIN_SYMBOL || 'APT';
 const APTOS_COIN_TYPE = COIN_TYPE; // Internal alias for backward compatibility
 const MODULE_NAME = 'nyu_aptos_builder_camp';
+
+// Helper function to get coin symbol from coin type
+export const getCoinSymbol = (): string => {
+  if (COIN_SYMBOL !== 'APT') {
+    return COIN_SYMBOL;
+  }
+
+  // Auto-detect from coin type if symbol not explicitly set
+  if (COIN_TYPE.includes('USDC')) return 'USDC';
+  if (COIN_TYPE.includes('USDT')) return 'USDT';
+  if (COIN_TYPE.includes('AptosCoin')) return 'APT';
+  return 'TOKEN';
+};
 
 // Initialize Aptos client
 const config = NODE_URL
@@ -53,13 +68,23 @@ export function bytesToString(bytes: number[] | Uint8Array): string {
 }
 
 /**
- * Helper: Format APT amount (divide by 10^8)
+ * Helper: Format coin amount (divide by 10^decimals)
+ * Supports both APT (8 decimals) and stablecoins (6 decimals)
+ */
+export function formatCoinAmount(amount: string | number, symbol?: string, decimals?: number): string {
+  const value = typeof amount === 'string' ? BigInt(amount) : BigInt(amount);
+  const dec = decimals || COIN_DECIMALS;
+  const sym = symbol || getCoinSymbol();
+  const divisor = BigInt(10 ** dec);
+  const coinAmount = Number(value) / Number(divisor);
+  return `${coinAmount.toFixed(2)} ${sym}`;
+}
+
+/**
+ * Helper: Format APT amount (backward compatibility)
  */
 export function formatAPT(amount: string | number): string {
-  const value = typeof amount === 'string' ? BigInt(amount) : BigInt(amount);
-  const divisor = BigInt(100_000_000); // 10^8
-  const apt = Number(value) / Number(divisor);
-  return `${apt.toFixed(2)} APT`;
+  return formatCoinAmount(amount);
 }
 
 /**
@@ -118,7 +143,7 @@ export async function getTreasuryBalance(): Promise<{
 
     return {
       balance,
-      balanceFormatted: formatAPT(balance),
+      balanceFormatted: formatCoinAmount(balance),
       coinType: APTOS_COIN_TYPE,
       timestamp: new Date().toISOString(),
     };
@@ -126,9 +151,10 @@ export async function getTreasuryBalance(): Promise<{
     // Return empty data if contracts not deployed
     if (isResourceNotFoundError(error)) {
       console.warn('Contracts not deployed yet. Returning empty treasury balance.');
+      const symbol = getCoinSymbol();
       return {
         balance: '0',
-        balanceFormatted: '0.00 APT',
+        balanceFormatted: `0.00 ${symbol}`,
         coinType: APTOS_COIN_TYPE,
         timestamp: new Date().toISOString(),
       };
@@ -396,9 +422,9 @@ export async function getTreasuryStats(): Promise<any> {
         merchTotal: merchTotal.toString(),
         totalDeposits: totalDeposits.toString(),
         depositCount: 0,
-        sponsorTotalFormatted: formatAPT(sponsorTotal.toString()),
-        merchTotalFormatted: formatAPT(merchTotal.toString()),
-        totalDepositsFormatted: formatAPT(totalDeposits.toString()),
+        sponsorTotalFormatted: formatCoinAmount(sponsorTotal.toString()),
+        merchTotalFormatted: formatCoinAmount(merchTotal.toString()),
+        totalDepositsFormatted: formatCoinAmount(totalDeposits.toString()),
       },
       reimbursements: {
         totalRequests: requests.length,
@@ -406,22 +432,23 @@ export async function getTreasuryStats(): Promise<any> {
         pendingRequests: pendingRequests.length,
         totalPaid: totalPaid.toString(),
         totalPending: totalPending.toString(),
-        totalPaidFormatted: formatAPT(totalPaid.toString()),
-        totalPendingFormatted: formatAPT(totalPending.toString()),
+        totalPaidFormatted: formatCoinAmount(totalPaid.toString()),
+        totalPendingFormatted: formatCoinAmount(totalPending.toString()),
       },
     };
   } catch (error) {
     if (isResourceNotFoundError(error)) {
       console.warn('Contracts not deployed yet. Returning empty treasury stats.');
+      const symbol = getCoinSymbol();
       return {
         deposits: {
           sponsorTotal: '0',
           merchTotal: '0',
           totalDeposits: '0',
           depositCount: 0,
-          sponsorTotalFormatted: '0.00 APT',
-          merchTotalFormatted: '0.00 APT',
-          totalDepositsFormatted: '0.00 APT',
+          sponsorTotalFormatted: `0.00 ${symbol}`,
+          merchTotalFormatted: `0.00 ${symbol}`,
+          totalDepositsFormatted: `0.00 ${symbol}`,
         },
         reimbursements: {
           totalRequests: 0,
@@ -429,8 +456,8 @@ export async function getTreasuryStats(): Promise<any> {
           pendingRequests: 0,
           totalPaid: '0',
           totalPending: '0',
-          totalPaidFormatted: '0.00 APT',
-          totalPendingFormatted: '0.00 APT',
+          totalPaidFormatted: `0.00 ${symbol}`,
+          totalPendingFormatted: `0.00 ${symbol}`,
         },
       };
     }

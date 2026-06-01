@@ -258,6 +258,16 @@ export interface ProposalFilters extends PaginationParams {
   creator?: string;
 }
 
+// Organization Types
+export interface Organization {
+  id: string;
+  name: string;
+  description: string;
+  logo?: string;
+  memberCount?: number;
+  hasAccess: boolean;
+}
+
 // Health Check Type
 export interface HealthCheck {
   status: string;
@@ -270,4 +280,116 @@ export interface HealthCheck {
     nodeUrl: string;
   };
   version: string;
+}
+
+// Notification Types
+export type NotificationCategory =
+  | 'wallet'
+  | 'security'
+  | 'governance'
+  | 'reimbursement'
+  | 'treasury'
+  | 'education'
+  | 'system';
+
+export type NotificationPriority = 'low' | 'normal' | 'high' | 'urgent';
+
+export interface Notification {
+  id: number;
+  user_address: string;
+  notification_type: string;
+  title: string;
+  message: string;
+  category: NotificationCategory;
+  priority: NotificationPriority;
+  read: boolean;
+  read_at?: string;
+  action_url?: string;
+  action_label?: string;
+  metadata?: Record<string, any>;
+  created_at: string;
+  expires_at?: string;
+}
+
+export interface NotificationPreferences {
+  user_address: string;
+  email_enabled: boolean;
+  in_app_enabled: boolean;
+  categories: {
+    wallet: boolean;
+    security: boolean;
+    governance: boolean;
+    reimbursement: boolean;
+    treasury: boolean;
+    education: boolean;
+    system: boolean;
+  };
+  email_digest_frequency?: 'instant' | 'daily' | 'weekly' | 'never';
+  updated_at?: string;
+}
+
+export interface NotificationFilters extends PaginationParams {
+  category?: NotificationCategory;
+  read?: boolean;
+  priority?: NotificationPriority;
+}
+
+// Compliance Types
+export type ConsentType =
+  | 'WALLET_GENERATION'
+  | 'PRIVATE_KEY_STORAGE'
+  | 'DATA_PROCESSING'
+  | 'ANALYTICS'
+  | 'NOTIFICATIONS'
+  | 'THIRD_PARTY_SHARING';
+
+export interface ConsentRecord {
+  id: number;
+  user_address: string;
+  consent_type: ConsentType;
+  granted: boolean;
+  version: string;
+  granted_at?: string;
+  revoked_at?: string;
+  ip_address?: string;
+}
+
+export interface ConsentStatus {
+  [key: string]: {
+    granted: boolean;
+    version: string;
+    granted_at?: string;
+    revoked_at?: string;
+  };
+}
+
+export interface AuditLogEntry {
+  id: number;
+  user_address: string;
+  action: string;
+  resource_type: string;
+  resource_id?: string;
+  details?: Record<string, any>;
+  ip_address: string;
+  user_agent: string;
+  timestamp: string;
+}
+
+export interface AuditFilters extends PaginationParams {
+  action?: string;
+  resource_type?: string;
+  start_date?: string;
+  end_date?: string;
+}
+
+export interface DataExport {
+  user_address: string;
+  profile: any;
+  wallets: any[];
+  reimbursements: any[];
+  votes: any[];
+  consents: ConsentRecord[];
+  audit_trail: AuditLogEntry[];
+  notifications: Notification[];
+  exported_at: string;
 }

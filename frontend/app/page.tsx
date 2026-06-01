@@ -1,7 +1,7 @@
 import LandingPage from '@/components/landing/LandingPage';
 
-// Root page - displays landing page with Auth0 SSO disabled for now
-// Session management will be handled by custom JWT auth after API migration
+// Root page - displays landing page
+// Authentication is handled via wallet-based authentication
 export default function RootPage() {
   return <LandingPage />;
 }
